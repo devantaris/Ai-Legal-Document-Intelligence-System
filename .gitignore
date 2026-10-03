@@ -27,3 +27,6 @@ storage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local tooling
+.zcode/
