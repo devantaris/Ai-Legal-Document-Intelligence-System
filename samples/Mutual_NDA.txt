@@ -1,0 +1,70 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of
+January 1, 2024 (the "Effective Date"), by and between Acme Corp, a Delaware
+corporation with offices at 100 Main Street, Wilmington, DE ("Company"), and
+Beta LLC, a New York limited liability company with offices at 5 Park Avenue,
+New York, NY ("Recipient"), each a "Party" and together the "Parties".
+
+1. PURPOSE. The Parties wish to explore a potential business relationship
+(including the evaluation of a possible software licensing arrangement) and
+may disclose certain confidential information to one another in connection
+with that purpose.
+
+2. CONFIDENTIAL INFORMATION. "Confidential Information" means any non-public
+information disclosed by one Party to the other, whether oral, written or
+electronic, that is designated as confidential or that reasonably should be
+understood to be confidential given the nature of the information and the
+circumstances of disclosure. Confidential Information includes business
+plans, customer lists, financial data, software source code and product
+roadmaps.
+
+3. EXCLUSIONS. Confidential Information does not include information that:
+3.1 is or becomes publicly available through no fault of the receiving
+Party; or
+3.2 was rightfully known to the receiving Party before disclosure; or
+3.3 is independently developed without use of the disclosing Party's
+Confidential Information; or
+3.4 is rightfully obtained from a third party without restriction.
+
+4. OBLIGATIONS OF THE RECEIVING PARTY. The receiving Party shall:
+4.1 protect the disclosing Party's Confidential Information with at least
+the same degree of care it uses to protect its own confidential information,
+and in no event with less than reasonable care;
+4.2 not disclose the Confidential Information to any third party without the
+prior written consent of the disclosing Party, except to employees and
+advisors who have a need to know and who are bound by confidentiality
+obligations at least as protective as this Agreement; and
+4.3 use the Confidential Information solely for the Purpose stated in
+Section 1.
+
+5. TERM. This Agreement commences on the Effective Date and continues for a
+period of two (2) years, unless terminated earlier in accordance with
+Section 6.
+
+6. TERMINATION. Either Party may terminate this Agreement at any time upon
+thirty (30) days' prior written notice to the other Party. The obligations in
+Sections 2, 4 and 7 survive termination for a period of three (3) years.
+
+7. GOVERNING LAW. This Agreement is governed by the laws of the State of
+Delaware, without regard to its conflict of laws principles.
+
+8. DISPUTE RESOLUTION. Any dispute arising out of or relating to this
+Agreement shall be finally resolved by binding arbitration administered by
+the American Arbitration Association in New York, New York, before a single
+arbitrator. Each Party shall bear its own legal costs.
+
+9. MISCELLANEOUS. This Agreement constitutes the entire agreement between the
+Parties with respect to its subject matter and may be amended only in writing
+signed by both Parties. Neither Party may assign this Agreement without the
+prior written consent of the other Party. If any provision of this Agreement
+is held unenforceable, the remaining provisions continue in full force.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the
+Effective Date.
+
+ACME CORP                               BETA LLC
+
+By: ______________________              By: ______________________
+Name: Jane Doe                          Name: John Smith
+Title: Vice President                   Title: Managing Member
