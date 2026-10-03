@@ -11,6 +11,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 import pgvector.sqlalchemy
 
+from app.core.config import settings
+
 revision: str = '8ee3b9a54d22'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -56,7 +58,7 @@ def upgrade() -> None:
     sa.Column('section_path', sa.Text(), nullable=False),
     sa.Column('text', sa.Text(), nullable=False),
     sa.Column('tsv', postgresql.TSVECTOR(), sa.Computed("to_tsvector('english', text)", persisted=True), nullable=True),
-    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1024), nullable=True),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=settings.EMBEDDING_DIM), nullable=True),
     sa.ForeignKeyConstraint(['document_id'], ['documents.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -72,7 +74,7 @@ def upgrade() -> None:
     sa.Column('page_end', sa.Integer(), nullable=True),
     sa.Column('section_path', sa.Text(), nullable=False),
     sa.Column('text', sa.Text(), nullable=False),
-    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1024), nullable=True),
+    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=settings.EMBEDDING_DIM), nullable=True),
     sa.ForeignKeyConstraint(['document_id'], ['documents.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
