@@ -37,6 +37,10 @@ cosine + Postgres FTS → RRF) → grounded, cited generation.
 
 ## Quick start (Windows / macOS / Linux)
 
+**Windows one-click:** double-click [`start_demo.bat`](start_demo.bat) — it starts Docker,
+the database, Ollama, both servers, warms the AI models into GPU memory (~2 h), verifies
+health and opens the app. The manual steps below are the equivalent by hand.
+
 Prerequisites: **Python 3.12+**, **Node 18+**, **Docker Desktop**, and
 [Ollama](https://ollama.com) with two models pulled:
 
