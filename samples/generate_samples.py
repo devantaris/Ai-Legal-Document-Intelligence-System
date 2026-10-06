@@ -9,11 +9,22 @@ Creates fictional, self-written agreements (no real-world text):
 Usage:  python samples/generate_samples.py
 """
 
+import re
 from pathlib import Path
 
 import pymupdf
 
 SAMPLES_DIR = Path(__file__).parent
+
+
+def flex_replace(text: str, old: str, new: str) -> str:
+    """Replace `old` with `new` ignoring line-wrap differences. Raises when the
+    snippet is not found so sample edits can never silently no-op."""
+    pattern = re.compile(r"\s+".join(re.escape(w) for w in old.split()))
+    out, count = pattern.subn(lambda _m: new, text)
+    if count == 0:
+        raise ValueError(f"sample edit snippet not found: {old[:60]!r}")
+    return out
 
 NDA = """MUTUAL NON-DISCLOSURE AGREEMENT
 
@@ -203,9 +214,11 @@ Effective Date.
 """
 
 V2 = V1.replace("MASTER SERVICES AGREEMENT (VERSION 1)", "MASTER SERVICES AGREEMENT (VERSION 2)")
-# renegotiated: net-15 payment, 2% interest, termination for convenience now
-# 30 days, warranty window added, liability cap doubled, insurance clause new
-V2 = V2.replace(
+# renegotiated: net-15 payment, 2% interest + suspension right, termination for
+# convenience now 30 days with break fee, liability cap doubled, warranty window
+# added, insurance clause new
+V2 = flex_replace(
+    V2,
     "Client shall pay each correct invoice within thirty (30) days of receipt. "
     "Late payments accrue interest at the rate of 1% per month or the maximum "
     "rate permitted by law, whichever is lower.",
@@ -214,7 +227,8 @@ V2 = V2.replace(
     "rate permitted by law, whichever is lower. Provider may suspend the "
     "Services if an invoice remains unpaid for more than thirty (30) days.",
 )
-V2 = V2.replace(
+V2 = flex_replace(
+    V2,
     "Either Party may terminate this Agreement for convenience upon ninety "
     "(90) days prior written notice to the other Party.",
     "Either Party may terminate this Agreement for convenience upon thirty "
@@ -222,13 +236,10 @@ V2 = V2.replace(
     "termination during the initial term requires payment of fifty percent "
     "(50%) of the fees remaining for the then-current SOW.",
 )
-V2 = V2.replace(
-    "6.3 Limitation of Liability. NEITHER PARTY SHALL BE LIABLE FOR ANY "
-    "INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES. EACH PARTY'S "
+V2 = flex_replace(
+    V2,
     "TOTAL AGGREGATE LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE FEES "
     "PAID BY CLIENT IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.",
-    "6.3 Limitation of Liability. NEITHER PARTY SHALL BE LIABLE FOR ANY "
-    "INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES. EACH PARTY'S "
     "TOTAL AGGREGATE LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED TWO (2) "
     "TIMES THE FEES PAID BY CLIENT IN THE TWELVE (12) MONTHS PRECEDING THE "
     "CLAIM.",
