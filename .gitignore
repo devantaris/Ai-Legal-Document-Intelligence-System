@@ -30,3 +30,6 @@ Thumbs.db
 
 # Local tooling
 .zcode/
+
+# Submission artifacts (personal, not for the repo)
+docs/
