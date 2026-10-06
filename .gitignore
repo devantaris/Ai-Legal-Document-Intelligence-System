@@ -36,3 +36,6 @@ docs/
 
 # Runtime logs
 *.log
+
+# Local ZCode skills
+.skills/
