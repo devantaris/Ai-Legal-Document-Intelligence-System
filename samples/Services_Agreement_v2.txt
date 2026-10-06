@@ -22,9 +22,7 @@ ARTICLE 2 - FEES AND PAYMENT
 Unless otherwise stated in the SOW, Provider shall invoice monthly in
 arrears.
 
-2.2 Payment Terms. Client shall pay each correct invoice within thirty (30)
-days of receipt. Late payments accrue interest at the rate of 1% per month
-or the maximum rate permitted by law, whichever is lower.
+2.2 Payment Terms. Client shall pay each correct invoice within fifteen (15) days of receipt. Late payments accrue interest at the rate of 2% per month or the maximum rate permitted by law, whichever is lower. Provider may suspend the Services if an invoice remains unpaid for more than thirty (30) days.
 
 2.3 Expenses. Client shall reimburse Provider for reasonable, pre-approved
 out-of-pocket expenses incurred in performing the Services.
@@ -37,9 +35,7 @@ one (1) year periods unless either Party gives written notice of
 non-renewal at least sixty (60) days before the end of the then-current
 term.
 
-3.2 Termination for Convenience. Either Party may terminate this Agreement
-for convenience upon ninety (90) days prior written notice to the other
-Party.
+3.2 Termination for Convenience. Either Party may terminate this Agreement for convenience upon thirty (30) days prior written notice to the other Party, provided that termination during the initial term requires payment of fifty percent (50%) of the fees remaining for the then-current SOW.
 
 3.3 Termination for Cause. Either Party may terminate this Agreement
 immediately upon written notice if the other Party materially breaches this
@@ -81,9 +77,7 @@ EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY AND
 FITNESS FOR A PARTICULAR PURPOSE.
 
 6.3 Limitation of Liability. NEITHER PARTY SHALL BE LIABLE FOR ANY
-INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES. EACH PARTY'S TOTAL
-AGGREGATE LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE FEES PAID BY
-CLIENT IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES. EACH PARTY'S TOTAL AGGREGATE LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED TWO (2) TIMES THE FEES PAID BY CLIENT IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
 
 ARTICLE 7 - GOVERNING LAW AND DISPUTES
 
