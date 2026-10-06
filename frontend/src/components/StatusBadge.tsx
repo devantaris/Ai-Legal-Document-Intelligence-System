@@ -1,24 +1,58 @@
 import type { DocStatus } from "../lib/types";
+import { CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
 
-const styles: Record<DocStatus, { label: string; cls: string }> = {
-  uploaded: { label: "Queued", cls: "bg-slate-100 text-slate-600" },
-  parsing: { label: "Parsing", cls: "bg-amber-100 text-amber-700" },
-  embedding: { label: "Indexing", cls: "bg-amber-100 text-amber-700" },
-  ready: { label: "Ready", cls: "bg-emerald-100 text-emerald-700" },
-  failed: { label: "Failed", cls: "bg-red-100 text-red-700" },
+const STYLES: Record<
+  DocStatus,
+  { label: string; bg: string; text: string; border: string; icon: typeof CheckCircle2 }
+> = {
+  uploaded: {
+    label: "Queued",
+    bg: "bg-neutral-100",
+    text: "text-neutral-600",
+    border: "border-neutral-200",
+    icon: Clock,
+  },
+  parsing: {
+    label: "Parsing",
+    bg: "bg-amber-50",
+    text: "text-amber-800",
+    border: "border-amber-200",
+    icon: Loader2,
+  },
+  embedding: {
+    label: "Indexing",
+    bg: "bg-neutral-100",
+    text: "text-neutral-700",
+    border: "border-neutral-200",
+    icon: Loader2,
+  },
+  ready: {
+    label: "Ready",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    icon: CheckCircle2,
+  },
+  failed: {
+    label: "Failed",
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+    icon: AlertCircle,
+  },
 };
 
 export function StatusBadge({ status }: { status: DocStatus }) {
-  const s = styles[status] ?? styles.uploaded;
-  const busy = status === "parsing" || status === "embedding" || status === "uploaded";
+  const s = STYLES[status] ?? STYLES.uploaded;
+  const isBusy = status === "parsing" || status === "embedding" || status === "uploaded";
+  const Icon = s.icon;
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${s.cls}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium ${s.bg} ${s.text} ${s.border}`}
     >
-      {busy && (
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-70" />
-      )}
-      {s.label}
+      <Icon className={`h-3 w-3 ${isBusy && status !== "uploaded" ? "animate-spin" : ""}`} />
+      <span>{s.label}</span>
     </span>
   );
 }

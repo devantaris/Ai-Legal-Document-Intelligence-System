@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Scale } from "lucide-react";
 import { useAuth } from "../stores/auth";
 
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
@@ -19,78 +20,109 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
       else await register(email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setBusy(false);
     }
   };
 
+  const handleDemoFill = () => {
+    setEmail("demo@legaliq.dev");
+    setPassword("demo12345");
+  };
+
   return (
-    <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-indigo-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f8f8f7] px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="text-3xl font-bold tracking-tight text-slate-900">
-            ⚖ Legal<span className="text-indigo-600">IQ</span>
+        {/* Brand */}
+        <div className="text-center mb-6">
+          <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-900 text-white mb-2.5">
+            <Scale className="h-4 w-4" />
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            AI-powered intelligence for legal documents
+          <h1 className="text-lg font-semibold tracking-tight text-neutral-900">LegalIQ</h1>
+          <p className="mt-0.5 text-xs text-neutral-500">
+            {mode === "login" ? "Sign in to your workspace" : "Create a new local account"}
           </p>
         </div>
-        <form
-          onSubmit={submit}
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              placeholder="you@firm.com"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              placeholder={mode === "register" ? "At least 8 characters" : "••••••••"}
-            />
-          </div>
+
+        {/* Card */}
+        <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-xs">
           {error && (
-            <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700">
+              {error}
+            </div>
           )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
-          </button>
-          <p className="text-center text-sm text-slate-500">
+
+          <form onSubmit={submit} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="counsel@firm.com"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-900 outline-none focus:border-neutral-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1">Password</label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-900 outline-none focus:border-neutral-400"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-lg bg-neutral-900 py-2.5 text-xs font-medium text-white hover:bg-neutral-800 transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {busy ? "Authenticating…" : mode === "login" ? "Sign In" : "Register"}
+            </button>
+          </form>
+
+          {/* Quick Demo */}
+          <div className="mt-4 pt-3.5 border-t border-neutral-100">
+            <button
+              type="button"
+              onClick={handleDemoFill}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 transition"
+            >
+              Fill Demo Credentials
+            </button>
+          </div>
+
+          <div className="mt-4 text-center text-xs text-neutral-500">
             {mode === "login" ? (
-              <>
-                No account?{" "}
-                <Link to="/register" className="font-medium text-indigo-600 hover:underline">
+              <span>
+                Need an account?{" "}
+                <Link to="/register" className="font-medium text-neutral-900 hover:underline">
                   Register
                 </Link>
-              </>
+              </span>
             ) : (
-              <>
-                Already registered?{" "}
-                <Link to="/login" className="font-medium text-indigo-600 hover:underline">
+              <span>
+                Already have an account?{" "}
+                <Link to="/login" className="font-medium text-neutral-900 hover:underline">
                   Sign in
                 </Link>
-              </>
+              </span>
             )}
-          </p>
-        </form>
+          </div>
+        </div>
+
+        <div className="mt-4 text-center">
+          <Link to="/landing" className="text-xs text-neutral-500 hover:text-neutral-800">
+            ← Overview &amp; 3D Showcase
+          </Link>
+        </div>
       </div>
     </div>
   );
