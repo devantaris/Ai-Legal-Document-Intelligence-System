@@ -33,3 +33,6 @@ Thumbs.db
 
 # Submission artifacts (personal, not for the repo)
 docs/
+
+# Runtime logs
+*.log
