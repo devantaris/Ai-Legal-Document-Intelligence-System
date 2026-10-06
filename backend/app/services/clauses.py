@@ -4,7 +4,7 @@ with the LLM, then store clauses with embeddings for the compare feature."""
 import math
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.models import CLAUSE_TYPES, Clause, Document
@@ -28,6 +28,17 @@ class ClassifiedSection(BaseModel):
 
 class ClassificationBatch(BaseModel):
     sections: list[ClassifiedSection] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_bare_list(cls, data: Any) -> Any:
+        """Tolerate models that return a bare list instead of a sections object."""
+        if isinstance(data, list):
+            return {"sections": data}
+        if isinstance(data, dict) and "clauses" in data and "sections" not in data:
+            data = dict(data)
+            data["sections"] = data.pop("clauses")
+        return data
 
 
 def _prompt(sections: list) -> str:

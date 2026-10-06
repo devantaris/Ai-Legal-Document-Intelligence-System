@@ -3,7 +3,7 @@ documents, then have the LLM characterize each material change."""
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.models import Clause, Document
@@ -24,6 +24,24 @@ class PairVerdict(BaseModel):
 
 class VerdictBatch(BaseModel):
     pairs: list[PairVerdict] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_bare_list(cls, data: Any) -> Any:
+        if isinstance(data, list):
+            return {"pairs": data}
+        return data
+
+
+class OverallSummary(BaseModel):
+    summary: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_bare_string(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"summary": data}
+        return data
 
 
 def _match(a_clauses: list[Clause], b_clauses: list[Clause]) -> tuple[list[tuple[Clause, Clause, float]], list[Clause], list[Clause]]:
@@ -123,8 +141,6 @@ def _overall_summary(provider, items: list[dict[str, Any]]) -> str:
     ).summary
 
 
-class OverallSummary(BaseModel):
-    summary: str
 
 
 def compare_documents(session: Session, user_id, doc_a: Document, doc_b: Document) -> dict[str, Any]:

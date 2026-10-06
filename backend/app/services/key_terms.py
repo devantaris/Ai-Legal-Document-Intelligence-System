@@ -3,7 +3,7 @@ retrieval-backed gap-fill pass for any fields the first pass could not find."""
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.models import Chunk, Document
@@ -39,9 +39,51 @@ _FIELDS_DESCRIPTION = """\
 - special_notes: anything unusual, one-sided or worth a lawyer's attention (short bullets)"""
 
 
+_STRING_FIELDS = (
+    "agreement_type",
+    "effective_date",
+    "term",
+    "governing_law",
+    "payment_terms",
+    "termination",
+    "renewal",
+    "confidentiality",
+    "indemnification",
+    "dispute_resolution",
+)
+
+
+def _to_text(value: Any) -> str | None:
+    """Flatten whatever shape the model returned into displayable text."""
+    if value is None or isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        parts: list[str] = []
+        for v in value.values():
+            if isinstance(v, list):
+                parts.extend(str(x) for x in v)
+            else:
+                parts.append(str(v))
+        return "; ".join(p for p in parts if p)
+    if isinstance(value, list):
+        return "; ".join(str(x) for x in value)
+    return str(value)
+
+
 class Party(BaseModel):
     name: str
     role: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data = dict(data)
+            if "name" in data:
+                data["name"] = _to_text(data["name"]) or "Unknown party"
+            if "role" in data:
+                data["role"] = _to_text(data["role"])
+        return data
 
 
 class KeyTerms(BaseModel):
@@ -58,6 +100,25 @@ class KeyTerms(BaseModel):
     dispute_resolution: str | None = None
     obligations: list[str] = Field(default_factory=list)
     special_notes: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce(cls, data: Any) -> Any:
+        """Small local models return nested objects/lists for string fields;
+        coerce everything to the declared shape instead of failing."""
+        if not isinstance(data, dict):
+            return data
+        data = dict(data)
+        for field in _STRING_FIELDS:
+            if field in data:
+                data[field] = _to_text(data[field])
+        for field in ("obligations", "special_notes"):
+            value = data.get(field)
+            if isinstance(value, str):
+                data[field] = [value]
+            elif isinstance(value, list):
+                data[field] = [_to_text(v) for v in value if _to_text(v)]
+        return data
 
 
 def _base_pass(session: Session, doc: Document) -> KeyTerms:

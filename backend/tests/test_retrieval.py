@@ -32,6 +32,8 @@ def _doc_model(doc_id):
 
 
 def test_chunks_have_embeddings_and_pages(ingested_doc):
+    from app.core.config import settings
+
     db = SessionLocal()
     try:
         chunks = (
@@ -42,7 +44,7 @@ def test_chunks_have_embeddings_and_pages(ingested_doc):
         )
         assert len(chunks) >= 3
         assert all(c.embedding is not None for c in chunks)
-        assert all(len(c.embedding) == 1024 for c in chunks)
+        assert all(len(c.embedding) == settings.EMBEDDING_DIM for c in chunks)
         assert all(c.page_start == 1 for c in chunks)  # single virtual page
         assert any("termination" in c.text.lower() for c in chunks)
     finally:
