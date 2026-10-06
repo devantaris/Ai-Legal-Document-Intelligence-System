@@ -1,6 +1,7 @@
 """Clause-level comparison of two documents: embed-match clauses across
 documents, then have the LLM characterize each material change."""
 
+from difflib import SequenceMatcher
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
@@ -11,9 +12,18 @@ from app.services.clauses import _clause_dict, _cosine, extract_clauses
 from app.services.llm import ChatMessage, ask_json, get_provider
 
 _MATCH_THRESHOLD = 0.70
+# Identical-vs-material is judged on normalized TEXT similarity, not embedding
+# similarity: sentence embeddings barely move when a single number or date in a
+# clause changes, so only a literal text diff is sensitive enough.
 _IDENTICAL_THRESHOLD = 0.995
 _TYPE_WEIGHT = 0.3  # weight of "same clause type" in the match score
 _PAIR_TEXT_CHARS = 1200
+
+
+def _text_similarity(a: str, b: str) -> float:
+    return SequenceMatcher(
+        None, " ".join(a.lower().split()), " ".join(b.lower().split())
+    ).ratio()
 
 
 class PairVerdict(BaseModel):
@@ -151,18 +161,24 @@ def compare_documents(session: Session, user_id, doc_a: Document, doc_b: Documen
     pairs, removed, added = _match(a_clauses, b_clauses)
     items: list[dict[str, Any]] = []
 
-    material = [p for p in pairs if p[2] < _IDENTICAL_THRESHOLD]
-    verdict_by_index: dict[int, PairVerdict] = {}
-    for verdict in _verdicts(provider, material):
-        verdict_by_index[verdict.index - 1] = verdict  # prompt numbering is 1-based
+    # positions of pairs whose texts differ enough to need an LLM verdict
+    material_idx = [
+        n
+        for n, p in enumerate(pairs)
+        if _text_similarity(p[0].text, p[1].text) < _IDENTICAL_THRESHOLD
+    ]
+    verdict_by_pair: dict[int, PairVerdict] = {}
+    for mat_pos, verdict in enumerate(_verdicts(provider, [pairs[n] for n in material_idx])):
+        # the prompt numbers pairs 1..len(material); map back to pair positions
+        if 1 <= verdict.index <= len(material_idx):
+            verdict_by_pair[material_idx[verdict.index - 1]] = verdict
 
     for n, (a, b, score) in enumerate(pairs):
-        if score >= _IDENTICAL_THRESHOLD:
-            level, summary = "unchanged", "No substantive change."
+        if n in verdict_by_pair:
+            verdict = verdict_by_pair[n]
+            level, summary = verdict.change_level, verdict.change_summary
         else:
-            verdict = verdict_by_index.get(n)
-            level = verdict.change_level if verdict else "minor"
-            summary = verdict.change_summary if verdict else ""
+            level, summary = "unchanged", "No substantive change."
         items.append(
             {
                 "status": "modified",
