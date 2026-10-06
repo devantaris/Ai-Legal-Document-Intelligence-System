@@ -1,130 +1,126 @@
 # AI Legal Document Intelligence System (LegalIQ)
 
-A multi-user web application that ingests legal documents (contracts, NDAs,
-service agreements) and provides:
+Upload a legal document — get an executive summary, structured key terms, a classified clause
+library, page-cited Q&A chat, and clause-level comparison between two versions. Multi-user,
+JWT-secured, and **fully local by default**: the AI runs on your own machine via Ollama, so
+confidential contracts never leave it.
 
-- **Document Q&A chat** — RAG over your documents with streaming answers and
-  page-level citations
-- **Summaries & key terms** — executive summary plus structured extraction
-  (parties, dates, payment, termination, governing law, …)
-- **Clause library** — LLM-classified clauses with types and page references
-- **Document comparison** — clause-level diff between two versions with
-  change summaries
+> New to the project? Read [TUTORIAL.md](TUTORIAL.md) — a beginner's guide to every technology
+> used here, with analogies and a guided code tour.
+
+## Features
+
+| Feature | What you get |
+|---|---|
+| **Q&A chat (RAG)** | Streaming answers grounded in your document, each claim cited `[1] [2]` to a real page |
+| **Executive summary** | Sectioned markdown summary; long documents handled by map-reduce |
+| **Key terms** | Parties, dates, payment, termination, governing law — extracted to cards |
+| **Clause library** | Clauses classified into ~20 legal types with page references |
+| **Compare** | Clause-by-clause diff of two versions: unchanged / minor / moderate / major, added, removed, with change summaries |
 
 ## Architecture
 
 ```
 React 19 + Vite + Tailwind (frontend/)
-        │  JWT auth, SSE streaming
-FastAPI (backend/app)
-        │                          ┌─ Z.ai GLM (default, OpenAI-compatible)
-        ├─ LLM provider layer ─────┤
-        │                          └─ Ollama (local, config-switchable)
-        ├─ PostgreSQL + pgvector (docker-compose) — chunks, embeddings,
-        │   full-text search, clauses, conversations
-        └─ local ./storage/ — uploaded files
+        │  JWT auth · SSE streaming
+FastAPI backend (backend/app)
+        ├── LLM provider layer ──┬─ Ollama (default: llama3.2:3b + nomic-embed-text)
+        │                        └─ Z.ai GLM (OpenAI-compatible, config-switch)
+        ├── PostgreSQL 16 + pgvector (Docker) — chunks w/ embeddings + full-text search,
+        │   clauses, conversations; hybrid retrieval fused via Reciprocal Rank Fusion
+        └── ./storage — uploaded files
 ```
 
-Pipeline: upload → text extraction with page mapping (PyMuPDF / python-docx)
-→ structure-aware chunking (legal headings, ~700-token windows with overlap)
-→ embeddings (pluggable provider) → hybrid retrieval (pgvector cosine +
-Postgres full-text search fused with Reciprocal Rank Fusion) → answer /
-analysis with citations.
+Pipeline: upload → page-mapped extraction (PyMuPDF / python-docx) → structure-aware chunking
+(legal headings, ~700-token windows, page ranges kept) → embeddings → hybrid retrieval (pgvector
+cosine + Postgres FTS → RRF) → grounded, cited generation.
 
-## Quick start
+## Quick start (Windows / macOS / Linux)
 
-Prerequisites: **Python 3.12+**, **Node 18+**, **Docker Desktop**.
+Prerequisites: **Python 3.12+**, **Node 18+**, **Docker Desktop**, and
+[Ollama](https://ollama.com) with two models pulled:
 
 ```bash
-# 1. Database (PostgreSQL + pgvector)
+ollama pull llama3.2:3b       # chat model
+ollama pull nomic-embed-text  # embedding model
+```
+
+```bash
+# 1. Database
 docker compose up -d
 
-# 2. Configure — edit .env and set ZAI_API_KEY (get one at https://z.ai)
-cp .env.example .env
+# 2. Configuration — no API key needed for local mode
+cp .env.example .env             # defaults are ready for Ollama
 
 # 3. Backend
 cd backend
 python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt      # Windows
-.venv\Scripts\python -m alembic upgrade head
-.venv\Scripts\python -m uvicorn app.main:app --port 8000 --reload
+.venv/Scripts/pip install -r requirements.txt        # Windows
+# .venv/bin/pip install -r requirements.txt          # macOS/Linux
+.venv/Scripts/python -m alembic upgrade head
+.venv/Scripts/python -m uvicorn app.main:app --port 8000
 
-# 4. Frontend (second terminal, from the repo root)
-cd frontend
-npm install
-npm run dev
+# 4. Frontend — second terminal, repo root
+cd frontend && npm install && npm run dev
 ```
 
-Open http://localhost:5173 — register an account, upload a contract from
-`samples/`, and the document page will offer Summary / Key Terms / Clauses /
-Chat tabs once ingestion finishes (a few seconds after the status badge turns
-**Ready**). Use `Services_Agreement_v1.pdf` and `_v2.pdf` to try Compare.
+Open **http://localhost:5173**, register an account, and upload a contract. Use a document
+from [`testing documents/`](testing%20documents/) — ten realistic, fictional agreements
+(offer letter, lease, MSA+SOW, SaaS terms, loan, franchise, MOU, partnership deed, supply
+agreement, privacy policy) in PDF and DOCX, regeneratable via
+`testing documents/generate_testing_docs.py`.
 
-### Using local models (Ollama) instead of Z.ai
+### Switching to hosted AI (optional)
 
-```bash
-ollama pull llama3.1          # chat model
-ollama pull nomic-embed-text  # embedding model
+Get a key at [z.ai](https://z.ai), then in `.env`:
+
+```ini
+LLM_PROVIDER=zai
+ZAI_API_KEY=your-key
+EMBEDDING_DIM=1024
 ```
 
-then in `.env` set `LLM_PROVIDER=ollama` and `EMBEDDING_DIM=768`.
-Note: changing the embedding provider/dimension requires re-ingesting any
-already-processed documents (delete and re-upload).
+Changing the embedding provider/dimension requires re-ingesting existing documents
+(delete and re-upload, or `alembic downgrade base && alembic upgrade head` + re-upload).
 
 ## Configuration (`.env`)
 
-| Variable | Purpose |
-|---|---|
-| `LLM_PROVIDER` | `zai` (default) or `ollama` |
-| `ZAI_API_KEY` | API key for Z.ai (required for the default provider) |
-| `ZAI_LLM_MODEL` / `ZAI_EMBED_MODEL` | model names (defaults `glm-4.6`, `embedding-3`) |
-| `OLLAMA_LLM_MODEL` / `OLLAMA_EMBED_MODEL` | local model names |
-| `EMBEDDING_DIM` | must match the embedding model (1024 for Z.ai, 768 for nomic-embed-text) |
-| `DATABASE_URL` | points at the dockerized Postgres |
-| `RETRIEVAL_TOP_K`, `CHUNK_TOKENS`, `CHUNK_OVERLAP_TOKENS` | RAG tuning |
+| Variable | Default | Purpose |
+|---|---|---|
+| `LLM_PROVIDER` | `ollama` | `ollama` or `zai` |
+| `OLLAMA_LLM_MODEL` / `OLLAMA_EMBED_MODEL` | `llama3.2:3b` / `nomic-embed-text` | local models |
+| `ZAI_API_KEY`, `ZAI_BASE_URL`, `ZAI_LLM_MODEL`, `ZAI_EMBED_MODEL` | — | hosted provider |
+| `EMBEDDING_DIM` | `768` | must match the embedding model (768 nomic / 1024 Z.ai) |
+| `DATABASE_URL` | dockerized Postgres on :5433 | |
+| `RETRIEVAL_TOP_K`, `CHUNK_TOKENS`, `CHUNK_OVERLAP_TOKENS` | `6` / `700` / `100` | RAG tuning |
+| `MAX_UPLOAD_MB` | `50` | upload cap |
 
 ## Tests
 
-Runs against a dedicated `legal_ai_test` database (created automatically on
-the same Postgres server — dev data is untouched). Requires the dockerized
-database (`docker compose up -d`):
-
 ```bash
 cd backend
-.venv\Scripts\python -m pytest -q
+.venv/Scripts/python -m pytest -q
 ```
 
-28 tests cover auth, JWT handling, the chunker (page mapping, section paths,
-overlap), JSON extraction, provider behavior (mocked), hybrid retrieval with
-RRF, multi-user scoping, and a full API pipeline smoke test
-(upload → chat → summary → key terms → clauses → compare) using a fake LLM.
-
-## Regenerating sample contracts
-
-```bash
-backend/.venv/Scripts/python samples/generate_samples.py
-```
+28 tests run against an auto-created isolated `legal_ai_test` database with a deterministic
+fake LLM — auth, JWT, chunking (pages + section paths), retrieval fusion, multi-user isolation,
+and the full upload → chat → summary → key terms → clauses → compare pipeline.
 
 ## Project layout
 
 ```
-backend/app
-  core/       config, database, security (JWT + argon2), dependencies
-  models/     SQLAlchemy models (users, documents, chunks, clauses, chats)
-  schemas/    Pydantic request/response models
-  api/        routers: auth, documents, chat, analysis, compare
-  services/   extraction, chunking, ingestion, retrieval, chat, summarization,
-              key_terms, clauses, compare
-  services/llm/  provider layer: base + zai + ollama
-  workers/    background task entry points
-frontend/src  pages, components, lib (API client + SSE), stores
-samples/      generated sample contracts + generator script
+backend/app   core/ models/ schemas/ api/ services/ (extraction, chunking, ingestion,
+              retrieval, chat, summarization, key_terms, clauses, compare) + services/llm/
+frontend/src  pages/ components/ lib/ stores/
+samples/      two small demo contracts (v1 vs v2) for a quick Compare demo
+testing documents/  ten realistic agreements for manual upload testing
+docs/         milestone reports (not in the repo)
+TUTORIAL.md   beginner's guide to the whole stack
 ```
 
-## Roadmap (not in v1)
+## Roadmap
 
-- Risk & red-flag analysis (one-sided clause detection, missing-clause warnings)
+- Risk & red-flag analysis (one-sided / missing clause detection)
 - OCR for scanned PDFs
-- Celery/Redis job queue for large-scale ingestion
-- S3-compatible object storage
-- Teams / document sharing
+- Celery/Redis job queue, S3-compatible storage
+- Teams, document sharing, per-document permissions
