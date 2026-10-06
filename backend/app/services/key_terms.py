@@ -109,6 +109,9 @@ class KeyTerms(BaseModel):
         if not isinstance(data, dict):
             return data
         data = dict(data)
+        for field in ("parties", "obligations", "special_notes"):
+            if data.get(field) is None:
+                data[field] = []
         for field in _STRING_FIELDS:
             if field in data:
                 data[field] = _to_text(data[field])
