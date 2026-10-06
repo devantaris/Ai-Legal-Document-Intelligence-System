@@ -56,18 +56,22 @@ _STRING_FIELDS = (
 def _to_text(value: Any) -> str | None:
     """Flatten whatever shape the model returned into displayable text."""
     if value is None or isinstance(value, str):
-        return value
-    if isinstance(value, dict):
+        text = value
+    elif isinstance(value, dict):
         parts: list[str] = []
         for v in value.values():
             if isinstance(v, list):
                 parts.extend(str(x) for x in v)
             else:
                 parts.append(str(v))
-        return "; ".join(p for p in parts if p)
-    if isinstance(value, list):
-        return "; ".join(str(x) for x in value)
-    return str(value)
+        text = "; ".join(p for p in parts if p)
+    elif isinstance(value, list):
+        text = "; ".join(str(x) for x in value)
+    else:
+        text = str(value)
+    if text is not None and text.strip().lower() in ("null", "none", "n/a", "unknown"):
+        return None
+    return text
 
 
 class Party(BaseModel):
