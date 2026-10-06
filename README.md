@@ -64,11 +64,13 @@ python -m venv .venv
 cd frontend && npm install && npm run dev
 ```
 
-Open **http://localhost:5173**, register an account, and upload a contract. Use a document
-from [`testing documents/`](testing%20documents/) — ten realistic, fictional agreements
-(offer letter, lease, MSA+SOW, SaaS terms, loan, franchise, MOU, partnership deed, supply
-agreement, privacy policy) in PDF and DOCX, regeneratable via
-`testing documents/generate_testing_docs.py`.
+Open **http://localhost:5173**, register an account, and upload a contract.
+[`testing documents/`](testing%20documents/) holds everything you need for manual
+testing: **ten** realistic fictional agreements (offer letter, lease, MSA+SOW, SaaS
+terms, loan, franchise, MOU, partnership deed, supply agreement, privacy policy) plus
+**three long-form contracts of 30+ pages** (enterprise IT outsourcing, construction
+works with a bill of quantities, term-loan facility with amortisation schedules) —
+regeneratable via the `generate_*.py` scripts in that folder.
 
 ### Switching to hosted AI (optional)
 
