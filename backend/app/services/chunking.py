@@ -29,6 +29,10 @@ class ChunkData:
     text: str
     page_start: int
     page_end: int
+    # offsets into the joined-page text; equal to original-file offsets when
+    # the document is supplied as a single page (the eval harness relies on this)
+    char_start: int = 0
+    char_end: int = 0
 
 
 _NUMBER_HEADING = re.compile(r"^(\d+(?:\.\d+){0,3})[\.\):]?\s+\S")
@@ -148,6 +152,8 @@ def build_chunks(
                     text=item["text"].strip(),
                     page_start=item["page_start"],
                     page_end=item["page_end"],
+                    char_start=item["char_start"],
+                    char_end=item["char_end"],
                 )
             )
 
@@ -161,12 +167,15 @@ def build_chunks(
             if pending:
                 pending["text"] += "\n\n" + text
                 pending["page_end"] = section.page_end
+                pending["char_end"] = section.end
             else:
                 pending = {
                     "section_path": section.section_path,
                     "text": text,
                     "page_start": section.page_start,
                     "page_end": section.page_end,
+                    "char_start": section.start,
+                    "char_end": section.end,
                 }
             continue
 
@@ -178,6 +187,8 @@ def build_chunks(
                         "text": pending["text"] + "\n\n" + text,
                         "page_start": pending["page_start"],
                         "page_end": section.page_end,
+                        "char_start": pending["char_start"],
+                        "char_end": section.end,
                     }
                 )
                 pending = None
@@ -188,6 +199,8 @@ def build_chunks(
                         "text": text,
                         "page_start": section.page_start,
                         "page_end": section.page_end,
+                        "char_start": section.start,
+                        "char_end": section.end,
                     }
                 )
             continue
@@ -198,15 +211,19 @@ def build_chunks(
             if i == 0 and pending:
                 piece = pending["text"] + "\n\n" + piece
                 page_start = pending["page_start"]
+                char_start = pending["char_start"]
                 pending = None
             else:
                 page_start = page_of(section.start + w_start)
+                char_start = section.start + w_start
             flush(
                 {
                     "section_path": section.section_path,
                     "text": piece,
                     "page_start": page_start,
                     "page_end": page_of(section.start + w_end - 1),
+                    "char_start": char_start,
+                    "char_end": section.start + w_end,
                 }
             )
 
