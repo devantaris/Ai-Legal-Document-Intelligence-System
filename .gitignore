@@ -39,3 +39,7 @@ docs/
 
 # Local ZCode skills
 .skills/
+
+# Paper / benchmark artifacts
+benchmark_data/
+eval_results/
