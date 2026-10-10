@@ -32,7 +32,8 @@ Thumbs.db
 .zcode/
 
 # Submission artifacts (personal, not for the repo)
-docs/
+docs/*
+!docs/eval/
 
 # Runtime logs
 *.log
