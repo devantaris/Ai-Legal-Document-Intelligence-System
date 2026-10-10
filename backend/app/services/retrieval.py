@@ -3,6 +3,7 @@ fused with Reciprocal Rank Fusion. Pure vector search is weak on legal text
 (exact defined terms, section numbers), so both channels matter."""
 
 import uuid
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 
 from sqlalchemy import func, select
@@ -13,6 +14,7 @@ from app.models import Chunk, Document
 from app.services.llm import get_provider
 
 _RRF_K = 60
+ALL_CHANNELS = frozenset({"vector", "fts"})
 
 
 @dataclass
@@ -20,6 +22,7 @@ class Retrieved:
     chunk_id: uuid.UUID
     document_id: uuid.UUID
     filename: str
+    seq: int
     text: str
     section_path: str
     page_start: int | None
@@ -34,12 +37,11 @@ def retrieve(
     *,
     document_ids: list[uuid.UUID] | None = None,
     top_k: int | None = None,
+    channels: AbstractSet[str] | None = None,
 ) -> list[Retrieved]:
     k = top_k or settings.RETRIEVAL_TOP_K
     pool = max(k * 4, 16)
-
-    provider = get_provider()
-    qvec = provider.embed([query])[0]
+    active = ALL_CHANNELS if channels is None else ALL_CHANNELS & channels
 
     base = (
         select(Chunk, Document.filename)
@@ -49,16 +51,22 @@ def retrieve(
     if document_ids:
         base = base.where(Chunk.document_id.in_(document_ids))
 
-    vec_rows = session.execute(
-        base.order_by(Chunk.embedding.cosine_distance(qvec)).limit(pool)
-    ).all()
+    vec_rows: list = []
+    if "vector" in active:
+        provider = get_provider()
+        qvec = provider.embed([query])[0]
+        vec_rows = session.execute(
+            base.order_by(Chunk.embedding.cosine_distance(qvec)).limit(pool)
+        ).all()
 
-    tsq = func.plainto_tsquery("english", query)
-    fts_rows = session.execute(
-        base.where(Chunk.tsv.op("@@")(tsq))
-        .order_by(func.ts_rank(Chunk.tsv, tsq).desc())
-        .limit(pool)
-    ).all()
+    fts_rows: list = []
+    if "fts" in active:
+        tsq = func.plainto_tsquery("english", query)
+        fts_rows = session.execute(
+            base.where(Chunk.tsv.op("@@")(tsq))
+            .order_by(func.ts_rank(Chunk.tsv, tsq).desc())
+            .limit(pool)
+        ).all()
 
     fused: dict[uuid.UUID, list] = {}  # id -> [score, chunk, filename]
     for rank, (chunk, filename) in enumerate(vec_rows, start=1):
@@ -75,6 +83,7 @@ def retrieve(
             chunk_id=chunk.id,
             document_id=chunk.document_id,
             filename=filename,
+            seq=chunk.seq,
             text=chunk.text,
             section_path=chunk.section_path,
             page_start=chunk.page_start,
