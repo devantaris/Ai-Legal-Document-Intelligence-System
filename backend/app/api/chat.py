@@ -1,16 +1,25 @@
+from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, owned_document
 from app.models import Conversation, Message, User
 from app.schemas import AskIn, MessageOut
+from app.schemas.entailment import EntailmentAuditOut
 from app.services import chat as chat_service
+from app.services.entailment import audit_claim_entailment
 
 router = APIRouter(tags=["chat"])
+
+
+class AuditIn(BaseModel):
+    answer: str
+    citations: list[dict[str, Any]] = []
 
 
 @router.post("/documents/{doc_id}/chat")
@@ -55,3 +64,11 @@ def list_messages(
         .all()
     )
     return [MessageOut.model_validate(m) for m in rows]
+
+
+@router.post("/chat/audit", response_model=EntailmentAuditOut)
+def audit_response(
+    payload: AuditIn,
+    user: User = Depends(get_current_user),
+) -> EntailmentAuditOut:
+    return audit_claim_entailment(payload.answer, payload.citations)

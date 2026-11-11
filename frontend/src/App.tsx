@@ -8,6 +8,7 @@ import { DocumentPage } from "./pages/DocumentPage";
 import { ComparePage } from "./pages/ComparePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { LandingPage } from "./pages/LandingPage";
+import { PortfolioPage } from "./pages/PortfolioPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuth();
@@ -78,6 +79,14 @@ export default function App() {
         element={
           <RequireAuth>
             <DocumentPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/portfolio"
+        element={
+          <RequireAuth>
+            <PortfolioPage />
           </RequireAuth>
         }
       />

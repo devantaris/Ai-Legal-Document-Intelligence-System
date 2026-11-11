@@ -11,6 +11,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -18,7 +19,8 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user, owned_document
 from app.models import Chunk, Clause, Document, User
-from app.schemas import DocumentOut
+from app.schemas import ChunkLite, DocumentContentOut, DocumentOut
+from app.services.docx_export import generate_redline_docx
 from app.services.extraction import is_supported
 from app.services.ingestion import run_ingestion
 
@@ -113,6 +115,44 @@ def get_document(
     db: Session = Depends(get_db),
 ) -> DocumentOut:
     return _doc_out(db, owned_document(doc_id, user, db))
+
+
+@router.get("/{doc_id}/content", response_model=DocumentContentOut)
+def get_document_content(
+    doc_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DocumentContentOut:
+    doc = owned_document(doc_id, user, db)
+    chunks = (
+        db.query(Chunk)
+        .filter(Chunk.document_id == doc.id)
+        .order_by(Chunk.seq)
+        .all()
+    )
+    return DocumentContentOut(
+        id=doc.id,
+        filename=doc.filename,
+        page_count=doc.page_count,
+        chunks=[ChunkLite.model_validate(c) for c in chunks],
+    )
+
+
+@router.get("/{doc_id}/export-redline-docx")
+def export_redline_docx(
+    doc_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    doc = owned_document(doc_id, user, db)
+    buffer = generate_redline_docx(db, doc)
+    safe_name = Path(doc.filename).stem
+    filename = f"{safe_name}_LegalIQ_Redline.docx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)

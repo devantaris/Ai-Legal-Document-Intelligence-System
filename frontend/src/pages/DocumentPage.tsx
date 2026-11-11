@@ -4,16 +4,21 @@ import {
   GitCompare,
   ArrowLeft,
   Loader2,
+  FileDown,
+  Columns,
+  Maximize2,
 } from "lucide-react";
-import { request } from "../lib/api";
-import type { DocumentOut } from "../lib/types";
+import { getAccessToken, request } from "../lib/api";
+import type { Citation, DocumentOut, PlaybookFinding } from "../lib/types";
 import { StatusBadge } from "../components/StatusBadge";
 import { SummaryPanel } from "../components/SummaryPanel";
 import { KeyTermsPanel } from "../components/KeyTermsPanel";
 import { ClausesPanel } from "../components/ClausesPanel";
 import { ChatPanel } from "../components/ChatPanel";
+import { PlaybookReviewPanel } from "../components/PlaybookReviewPanel";
+import { DocumentReader } from "../components/DocumentReader";
 
-const TABS = ["Summary", "Key Terms", "Clauses", "Chat"] as const;
+const TABS = ["Summary", "Key Terms", "Clauses", "Playbook Review", "Chat"] as const;
 type Tab = (typeof TABS)[number];
 
 export function DocumentPage() {
@@ -22,6 +27,13 @@ export function DocumentPage() {
   const [doc, setDoc] = useState<DocumentOut | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("Summary");
+  const [splitView, setSplitView] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [activeHighlight, setActiveHighlight] = useState<{
+    chunk_id?: string;
+    quote?: string;
+    page?: number;
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +57,49 @@ export function DocumentPage() {
       clearInterval(t);
     };
   }, [id, doc?.status]);
+
+  const handleExportDocx = async () => {
+    if (!doc) return;
+    setDownloading(true);
+    try {
+      const token = getAccessToken();
+      const res = await fetch(`/api/documents/${doc.id}/export-redline-docx`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Failed to export redline docx");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${doc.filename.replace(/\.[^/.]+$/, "")}_LegalIQ_Redline.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleSelectCitation = (citation: Citation) => {
+    setSplitView(true);
+    setActiveHighlight({
+      chunk_id: citation.chunk_id,
+      quote: citation.quote,
+      page: citation.page ?? undefined,
+    });
+  };
+
+  const handleSelectPlaybookFinding = (finding: PlaybookFinding) => {
+    setSplitView(true);
+    setActiveHighlight({
+      chunk_id: finding.clause_id ?? undefined,
+      quote: finding.clause_text.slice(0, 80),
+      page: finding.page_start ?? undefined,
+    });
+  };
 
   if (error)
     return (
@@ -73,9 +128,13 @@ export function DocumentPage() {
   const busy = ["uploaded", "parsing", "embedding"].includes(doc.status);
 
   return (
-    <div className="mx-auto flex h-full max-w-5xl flex-col px-8 py-6">
-      {/* Top Bar */}
-      <div className="flex items-start justify-between gap-4 border-b border-neutral-200/80 pb-4">
+    <div
+      className={`mx-auto flex h-full flex-col px-6 py-6 transition-all duration-300 ${
+        splitView ? "max-w-[1700px]" : "max-w-5xl"
+      }`}
+    >
+      {/* Top Action Bar */}
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-200/80 pb-4">
         <div>
           <Link
             to="/"
@@ -94,11 +153,41 @@ export function DocumentPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Split Screen / Full Screen Toggle */}
+          <button
+            onClick={() => setSplitView((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+              splitView
+                ? "bg-neutral-900 text-white border-neutral-900"
+                : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+            }`}
+            title="Toggle Side-by-Side Document Reader"
+          >
+            {splitView ? <Maximize2 className="h-3.5 w-3.5" /> : <Columns className="h-3.5 w-3.5" />}
+            <span>{splitView ? "Single Pane" : "Split Canvas"}</span>
+          </button>
+
+          {/* Export Redline Word DOCX with Track Changes */}
+          <button
+            onClick={handleExportDocx}
+            disabled={downloading || busy}
+            className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition disabled:opacity-50"
+            title="Download Word Document with Tracked Changes & Comments"
+          >
+            {downloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-400" />
+            ) : (
+              <FileDown className="h-3.5 w-3.5 text-neutral-600" />
+            )}
+            <span>Export Redline (.docx)</span>
+          </button>
+
+          {/* Compare */}
           <button
             onClick={() => navigate(`/compare?a=${doc.id}`)}
             className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition"
           >
-            <GitCompare className="h-3.5 w-3.5" />
+            <GitCompare className="h-3.5 w-3.5 text-neutral-600" />
             <span>Compare</span>
           </button>
         </div>
@@ -117,32 +206,54 @@ export function DocumentPage() {
           Ingestion failed: {doc.error ?? "unknown error"}
         </div>
       ) : (
-        <>
-          {/* Minimalist Tabs */}
-          <div className="mt-4 flex border-b border-neutral-200">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`-mb-px border-b-2 px-4 py-2.5 text-xs font-medium transition ${
-                  tab === t
-                    ? "border-neutral-900 text-neutral-900 font-semibold"
-                    : "border-transparent text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className={`mt-4 flex-1 min-h-0 ${splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}`}>
+          {/* Left Pane: Document Canvas (When Split View is Enabled) */}
+          {splitView && (
+            <div className="h-[750px] overflow-hidden">
+              <DocumentReader
+                doc={doc}
+                highlight={activeHighlight}
+                onClearHighlight={() => setActiveHighlight(null)}
+              />
+            </div>
+          )}
 
-          {/* Tab Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto pt-5 pb-8">
-            {tab === "Summary" && <SummaryPanel doc={doc} />}
-            {tab === "Key Terms" && <KeyTermsPanel doc={doc} />}
-            {tab === "Clauses" && <ClausesPanel doc={doc} />}
-            {tab === "Chat" && <ChatPanel doc={doc} />}
+          {/* Right Pane (or Full View): Intelligence Panels */}
+          <div className="flex flex-col h-full min-h-0">
+            {/* Tabs */}
+            <div className="flex border-b border-neutral-200 overflow-x-auto">
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-xs font-medium transition ${
+                    tab === t
+                      ? "border-neutral-900 text-neutral-900 font-semibold"
+                      : "border-transparent text-neutral-500 hover:text-neutral-800"
+                  }`}
+                >
+                  {t}
+                  {t === "Playbook Review" && (
+                    <span className="ml-1.5 rounded-full bg-rose-100 px-1.5 py-0.2 text-[9px] font-bold text-rose-800">
+                      Audit
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            <div className="min-h-0 flex-1 overflow-y-auto pt-5 pb-8">
+              {tab === "Summary" && <SummaryPanel doc={doc} />}
+              {tab === "Key Terms" && <KeyTermsPanel doc={doc} />}
+              {tab === "Clauses" && <ClausesPanel doc={doc} />}
+              {tab === "Playbook Review" && (
+                <PlaybookReviewPanel doc={doc} onSelectClause={handleSelectPlaybookFinding} />
+              )}
+              {tab === "Chat" && <ChatPanel doc={doc} onSelectCitation={handleSelectCitation} />}
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

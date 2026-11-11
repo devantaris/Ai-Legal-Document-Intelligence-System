@@ -38,3 +38,22 @@ class ClauseOut(BaseModel):
     page_end: int | None
     section_path: str
     text: str
+
+
+class ChunkLite(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    seq: int
+    page_start: int | None
+    page_end: int | None
+    section_path: str
+    text: str
+
+
+class DocumentContentOut(BaseModel):
+    id: uuid.UUID
+    filename: str
+    page_count: int | None
+    chunks: list[ChunkLite]
+

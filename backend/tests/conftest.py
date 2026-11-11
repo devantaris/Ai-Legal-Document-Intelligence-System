@@ -27,7 +27,11 @@ from app.main import app
 
 def _create_test_database() -> None:
     admin_url = settings.DATABASE_URL.rsplit("/", 1)[0] + "/postgres"
-    admin = sa.create_engine(admin_url, isolation_level="AUTOCOMMIT")
+    admin = sa.create_engine(
+        admin_url,
+        isolation_level="AUTOCOMMIT",
+        connect_args={"connect_timeout": 1},
+    )
     try:
         with admin.connect() as conn:
             exists = conn.execute(
@@ -36,10 +40,10 @@ def _create_test_database() -> None:
             ).scalar()
             if not exists:
                 conn.execute(sa.text(f'CREATE DATABASE "{TEST_DB_NAME}"'))
-        # pgvector must be enabled per-database before create_all runs
-        with engine.connect() as conn:
-            conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS vector"))
-            conn.commit()
+            # pgvector must be enabled per-database before create_all runs
+            with engine.connect() as eng_conn:
+                eng_conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS vector"))
+                eng_conn.commit()
     except sa.exc.SQLAlchemyError:
         pass  # server unreachable: individual tests will surface the error
     finally:

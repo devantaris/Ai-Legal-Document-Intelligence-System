@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   FileText,
+  Briefcase,
   GitCompare,
   Settings,
   Sparkles,
@@ -18,6 +19,7 @@ import type { LlmInfo } from "../lib/types";
 
 const navItems = [
   { to: "/", label: "Documents", icon: FileText },
+  { to: "/portfolio", label: "Contract Vault", icon: Briefcase },
   { to: "/compare", label: "Compare", icon: GitCompare },
   { to: "/landing", label: "Overview & 3D", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },
