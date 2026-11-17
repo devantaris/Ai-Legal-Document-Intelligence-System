@@ -155,20 +155,20 @@ export function DocumentReader({ doc, highlight, onClearHighlight }: Props) {
   };
 
   return (
-    <div className="relative flex h-full flex-col bg-[#fbfbfa] border border-neutral-200/80 rounded-xl overflow-hidden shadow-sm">
+    <div className="relative flex h-full flex-col bg-[#F8F9FA] border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-2xs">
       {/* Document Reader Top Bar */}
-      <div className="flex items-center justify-between border-b border-neutral-200/80 bg-white px-4 py-2.5 text-xs">
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-white px-4 py-2.5 text-xs shrink-0">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-neutral-500" />
-          <span className="font-semibold text-neutral-900 truncate max-w-[220px]">
+          <BookOpen className="h-4 w-4 text-amber-700" />
+          <span className="font-bold text-[#0F172A] truncate max-w-[220px] font-serif-legal">
             {doc.filename}
           </span>
-          <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-mono text-neutral-600">
+          <span className="rounded bg-[#F1F5F9] px-1.5 py-0.5 text-[10px] font-mono text-neutral-600">
             {doc.page_count ? `${doc.page_count} Pages` : `${content.chunks.length} Chunks`}
           </span>
           {terms.length > 0 && (
-            <span className="rounded bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
-              {terms.length} Defined Terms
+            <span className="rounded bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+              {terms.length} Definitions
             </span>
           )}
         </div>
@@ -176,20 +176,20 @@ export function DocumentReader({ doc, highlight, onClearHighlight }: Props) {
         {/* In-doc Search */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-neutral-400" />
+            <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-neutral-400" />
             <input
               type="text"
               placeholder="Find in contract…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 w-36 sm:w-44 rounded-md border border-neutral-200 bg-neutral-50 pl-7 pr-2 text-[11px] text-neutral-800 focus:bg-white focus:border-neutral-400 focus:outline-none"
+              className="h-7 w-36 sm:w-44 rounded-lg border border-[#E2E8F0] bg-[#F8F9FA] pl-7 pr-2 text-[11px] text-neutral-800 focus:bg-white focus:border-[#0F172A] focus:outline-none transition"
             />
           </div>
 
           {highlight && (
             <button
               onClick={onClearHighlight}
-              className="rounded bg-amber-100 border border-amber-300 px-2 py-1 text-[10px] font-medium text-amber-900 hover:bg-amber-200 transition"
+              className="rounded-lg bg-amber-100 border border-amber-300 px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-200 transition"
               title="Clear active citation focus"
             >
               Clear Focus
@@ -199,16 +199,16 @@ export function DocumentReader({ doc, highlight, onClearHighlight }: Props) {
       </div>
 
       {/* Pages Canvas */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8 select-text">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 select-text bg-[#F1F5F9]/50">
         {sortedPages.map(([pageNum, pageChunks]) => (
           <div
             key={`page-${pageNum}`}
-            className="mx-auto max-w-2xl rounded-lg border border-neutral-200/90 bg-white p-7 shadow-xs font-serif text-neutral-800 text-xs leading-relaxed"
+            className="mx-auto max-w-2xl rounded-xl border border-[#E2E8F0] bg-white p-8 shadow-sm font-serif-legal text-neutral-900 text-xs leading-relaxed"
           >
             {/* Page Header Stamp */}
-            <div className="mb-4 flex items-center justify-between border-b border-neutral-100 pb-2 text-[10px] font-mono uppercase tracking-wider text-neutral-400 select-none">
-              <span>{doc.filename}</span>
-              <span>Page {pageNum}</span>
+            <div className="mb-4 flex items-center justify-between border-b border-[#F1F5F9] pb-2 text-[10px] font-mono uppercase tracking-wider text-neutral-400 select-none">
+              <span className="truncate max-w-sm">{doc.filename}</span>
+              <span className="font-semibold text-neutral-500">Page {pageNum}</span>
             </div>
 
             {/* Chunks on this page */}
@@ -228,16 +228,16 @@ export function DocumentReader({ doc, highlight, onClearHighlight }: Props) {
                     ref={(el) => {
                       chunkRefs.current[chunk.id] = el;
                     }}
-                    className={`rounded p-2 transition-all duration-300 ${
+                    className={`rounded-lg p-2.5 transition-all duration-300 ${
                       isDirectlyHighlighted
-                        ? "bg-amber-50 ring-2 ring-amber-400/80 shadow-xs"
+                        ? "bg-amber-50 ring-2 ring-amber-400/90 shadow-sm"
                         : matchesQuery
                         ? "bg-yellow-50/80 ring-1 ring-yellow-300"
-                        : ""
+                        : "hover:bg-neutral-50/50"
                     }`}
                   >
                     {chunk.section_path && (
-                      <div className="mb-1 font-sans text-[11px] font-bold text-neutral-900 tracking-tight">
+                      <div className="mb-1 font-sans-legal text-[11px] font-bold text-[#0F172A] tracking-tight">
                         {chunk.section_path}
                       </div>
                     )}
@@ -261,22 +261,22 @@ export function DocumentReader({ doc, highlight, onClearHighlight }: Props) {
             top: `${Math.min(window.innerHeight - 200, activeTooltipTerm.y)}px`,
             zIndex: 9999,
           }}
-          className="w-72 rounded-lg border border-neutral-200 bg-white p-3.5 shadow-xl text-xs font-sans text-neutral-900 pointer-events-none animate-in fade-in duration-150"
+          className="w-80 rounded-xl border border-[#CBD5E1] bg-white p-4 shadow-2xl text-xs font-sans-legal text-[#0F172A] pointer-events-none animate-in fade-in duration-150"
         >
-          <div className="flex items-center justify-between border-b border-neutral-100 pb-1.5 mb-1.5">
-            <span className="font-semibold text-neutral-900 flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-amber-600" />
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-1.5 mb-1.5">
+            <span className="font-bold text-[#0F172A] flex items-center gap-1.5 font-serif-legal">
+              <Sparkles className="h-3.5 w-3.5 text-amber-600" />
               {activeTooltipTerm.term.term}
             </span>
-            <span className="text-[10px] font-mono text-neutral-400">
-              Used {activeTooltipTerm.term.frequency}x
+            <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-1 rounded">
+              Invoked {activeTooltipTerm.term.frequency}x
             </span>
           </div>
-          <p className="font-serif text-[11px] text-neutral-700 italic leading-snug line-clamp-4">
+          <p className="font-serif-legal text-[11px] text-neutral-700 italic leading-relaxed line-clamp-4">
             "{activeTooltipTerm.term.definition}"
           </p>
-          <div className="mt-2 pt-1 border-t border-neutral-100 flex items-center justify-between text-[10px] text-neutral-400">
-            <span>{activeTooltipTerm.term.section_defined || "Defined in text"}</span>
+          <div className="mt-2.5 pt-1.5 border-t border-[#F1F5F9] flex items-center justify-between text-[10px] font-mono text-neutral-400">
+            <span>{activeTooltipTerm.term.section_defined || "Defined in body"}</span>
             {activeTooltipTerm.term.page_defined && <span>Page {activeTooltipTerm.term.page_defined}</span>}
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Briefcase,
   Search,
   Download,
   Loader2,
@@ -9,6 +8,10 @@ import {
   ExternalLink,
   Layers,
   Sparkles,
+  Building,
+  Scale,
+  ShieldCheck,
+  FileText,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { request } from "../lib/api";
@@ -99,7 +102,8 @@ export function PortfolioPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredDocs = (matrix?.documents || []).filter((d) => {
+  const docs = matrix?.documents || [];
+  const filteredDocs = docs.filter((d) => {
     const q = search.toLowerCase();
     return (
       d.filename.toLowerCase().includes(q) ||
@@ -109,49 +113,106 @@ export function PortfolioPage() {
     );
   });
 
+  // Unique counts for KPI cards
+  const distinctParties = new Set<string>();
+  docs.forEach((d) => d.parties.forEach((p) => distinctParties.add(p.trim())));
+  const distinctJurisdictions = new Set<string>();
+  docs.forEach((d) => {
+    if (d.governing_law) distinctJurisdictions.add(d.governing_law.trim());
+  });
+
   return (
-    <div className="mx-auto flex h-full max-w-6xl flex-col px-8 py-6 space-y-6">
+    <div className="mx-auto flex h-full max-w-7xl flex-col px-6 py-8 space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-neutral-500" />
-            <h1 className="text-lg font-semibold text-neutral-900">Contract Vault & Due Diligence Matrix</h1>
-            <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-700">
-              {currentOrg?.name ?? "Organization"}
-            </span>
-            {currentWorkspace && (
-              <span className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-mono text-neutral-600">
-                📁 {currentWorkspace.name}
-              </span>
-            )}
+          <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1.5">
+            <span className="font-semibold text-neutral-700">{currentOrg?.name ?? "Firm Organization"}</span>
+            <span>•</span>
+            <span className="text-amber-700 font-semibold">📁 {currentWorkspace?.name ?? "General Matter"}</span>
           </div>
-          <p className="mt-1 text-xs text-neutral-500">
-            Cross-contract intelligence, portfolio queries, and automated tabular metadata extraction
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+            Contract Vault & Diligence Matrix
+          </h1>
+          <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+            Cross-contract transactional intelligence, portfolio due diligence queries, and automated tabular metadata extraction across all agreements.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportCSV}
             disabled={!matrix || matrix.documents.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800 transition disabled:opacity-50 shadow-sm"
             title="Download structured spreadsheet for M&A due diligence"
           >
-            <Download className="h-3.5 w-3.5 text-neutral-500" />
-            <span>Export Due Diligence (CSV)</span>
+            <Download className="h-3.5 w-3.5 text-amber-400" />
+            <span>Export Diligence CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Multi-Document Cross-Repository AI Examiner */}
-      <div className="rounded-xl border border-neutral-200/90 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-semibold text-neutral-900 mb-2">
-          <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-          <span>Cross-Repository Legal Query</span>
-          <span className="rounded bg-neutral-100 px-1.5 py-0.2 text-[10px] font-mono text-neutral-500">
-            Searches across all {matrix?.total_documents ?? 0} contracts
-          </span>
+      {/* KPI Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-2xs">
+          <div className="text-[11px] font-mono text-neutral-400 uppercase flex items-center justify-between">
+            <span>Vault Contracts</span>
+            <FileText className="h-4 w-4 text-neutral-400" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-[#0F172A] font-serif-legal">
+            {matrix?.total_documents ?? 0}
+          </div>
+          <div className="mt-1 text-[11px] text-neutral-500">Full text indexed</div>
+        </div>
+
+        <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-2xs">
+          <div className="text-[11px] font-mono text-neutral-400 uppercase flex items-center justify-between">
+            <span>Counterparties</span>
+            <Building className="h-4 w-4 text-amber-600" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-amber-700 font-serif-legal">
+            {distinctParties.size}
+          </div>
+          <div className="mt-1 text-[11px] text-neutral-500">Distinct legal entities</div>
+        </div>
+
+        <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-2xs">
+          <div className="text-[11px] font-mono text-neutral-400 uppercase flex items-center justify-between">
+            <span>Governing Laws</span>
+            <Scale className="h-4 w-4 text-neutral-400" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-[#0F172A] font-serif-legal">
+            {distinctJurisdictions.size}
+          </div>
+          <div className="mt-1 text-[11px] text-neutral-500">Delaware, NY, & Regional</div>
+        </div>
+
+        <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-2xs">
+          <div className="text-[11px] font-mono text-neutral-400 uppercase flex items-center justify-between">
+            <span>Audit Readiness</span>
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-emerald-700 font-serif-legal">
+            100%
+          </div>
+          <div className="mt-1 text-[11px] text-emerald-700 font-medium">Metadata Structured</div>
+        </div>
+      </div>
+
+      {/* Cross-Repository Legal AI Query Box */}
+      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+            <Sparkles className="h-3.5 w-3.5" />
+          </div>
+          <div>
+            <h3 className="text-xs font-bold text-[#0F172A] font-serif-legal">
+              Cross-Repository Legal Examination
+            </h3>
+            <span className="text-[10px] font-mono text-neutral-400">
+              Queries simultaneously across all {matrix?.total_documents ?? 0} contracts in matter
+            </span>
+          </div>
         </div>
 
         <form onSubmit={handlePortfolioQuery} className="flex gap-2">
@@ -159,63 +220,65 @@ export function PortfolioPage() {
             type="text"
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Ask across your contract repository (e.g. 'Compare payment terms and liability caps', 'Which contracts expire in 2026?')"
+            placeholder="Ask across the matter vault (e.g. 'Compare liability caps and payment terms', 'Which contracts contain unlimited indemnification?')"
             disabled={queryLoading}
-            className="flex-1 rounded-lg border border-neutral-200 bg-neutral-50/50 px-3.5 py-2 text-xs text-neutral-900 placeholder-neutral-400 outline-none focus:bg-white focus:border-neutral-400 transition"
+            className="flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8F9FA] px-4 py-2.5 text-xs text-[#0F172A] placeholder-neutral-400 focus:bg-white focus:border-[#0F172A] focus:outline-none transition shadow-2xs"
           />
           <button
             type="submit"
             disabled={queryLoading || !queryInput.trim()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F172A] px-5 py-2.5 text-xs font-semibold text-white hover:bg-neutral-800 transition disabled:opacity-50 shadow-sm"
           >
             {queryLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
             ) : (
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-3.5 w-3.5 text-amber-400" />
             )}
             <span>Analyze Vault</span>
           </button>
         </form>
 
-        {/* Query Suggestions */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-neutral-400">
-          <span>Try:</span>
+        {/* Suggestion Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-neutral-400">
+          <span className="font-mono text-[10px] uppercase">Example Queries:</span>
           <button
-            onClick={() => {
-              setQueryInput("Compare governing law and jurisdiction across all contracts.");
-            }}
-            className="rounded bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
+            onClick={() => setQueryInput("Compare governing law and dispute resolution venues across all contracts.")}
+            className="rounded-md bg-[#F1F5F9] px-2.5 py-1 text-neutral-700 hover:text-[#0F172A] hover:bg-neutral-200 transition text-[11px]"
           >
             "Compare governing law across contracts"
           </button>
           <button
-            onClick={() => {
-              setQueryInput("Summarize all termination for convenience clauses.");
-            }}
-            className="rounded bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
+            onClick={() => setQueryInput("Summarize all limitation of liability caps and consequential damages waivers.")}
+            className="rounded-md bg-[#F1F5F9] px-2.5 py-1 text-neutral-700 hover:text-[#0F172A] hover:bg-neutral-200 transition text-[11px]"
           >
-            "Summarize termination for convenience clauses"
+            "Summarize all liability caps"
+          </button>
+          <button
+            onClick={() => setQueryInput("Which contracts have termination for convenience without penalty?")}
+            className="rounded-md bg-[#F1F5F9] px-2.5 py-1 text-neutral-700 hover:text-[#0F172A] hover:bg-neutral-200 transition text-[11px]"
+          >
+            "Termination for convenience terms"
           </button>
         </div>
 
         {/* Synthesized Cross-Contract Answer */}
         {queryResult && (
-          <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/70 p-4 font-serif text-xs leading-relaxed text-neutral-800">
-            <div className="font-sans text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-2 flex items-center justify-between">
-              <span>Vault Cross-Examination Synthesis</span>
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-5 space-y-3 font-serif-legal text-xs leading-relaxed text-[#0F172A]">
+            <div className="font-sans-legal text-[10px] font-mono uppercase tracking-wider text-amber-800 font-bold flex items-center justify-between">
+              <span>Cross-Matter Synthesis</span>
               <span>Referenced: {queryResult.documents_referenced.join(", ")}</span>
             </div>
 
-            <div className="prose-xs max-w-none [&_p]:my-1.5 [&_ul]:list-disc [&_ul]:pl-4 [&_li]:my-0.5">
+            <div className="prose-xs max-w-none [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-4 [&_li]:my-1 text-neutral-900">
               <Markdown>{queryResult.answer}</Markdown>
             </div>
 
             {queryResult.citations.length > 0 && (
-              <div className="mt-3 pt-2.5 border-t border-neutral-200/80 flex flex-wrap gap-1.5">
+              <div className="pt-3 border-t border-amber-200/60 flex flex-wrap gap-2">
                 {queryResult.citations.map((c: Citation, idx: number) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center gap-1 rounded bg-white border border-neutral-200 px-2 py-0.5 text-[10px] font-mono text-neutral-700"
+                    className="inline-flex items-center gap-1 rounded-md bg-white border border-amber-200 px-2 py-0.5 text-[10px] font-mono text-neutral-800 shadow-2xs"
                   >
                     [{c.n}] {c.filename} {c.page ? `p. ${c.page}` : ""}
                   </span>
@@ -226,96 +289,96 @@ export function PortfolioPage() {
         )}
       </div>
 
-      {/* Due Diligence Data Grid Header & Filter */}
+      {/* Due Diligence Data Grid */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-neutral-500" />
-            <h3 className="text-xs font-semibold text-neutral-900">
-              Due Diligence Metadata Matrix ({filteredDocs.length})
+            <h3 className="text-xs font-bold text-[#0F172A] font-serif-legal">
+              Matter Due Diligence Metadata Grid ({filteredDocs.length})
             </h3>
           </div>
 
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-neutral-400" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-neutral-400" />
             <input
               type="text"
-              placeholder="Filter by title, party, law…"
+              placeholder="Filter by filename, party, or law…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-60 rounded-md border border-neutral-200 bg-white pl-8 pr-3 text-xs text-neutral-800 focus:border-neutral-400 focus:outline-none"
+              className="h-8 w-64 rounded-lg border border-[#E2E8F0] bg-white pl-8 pr-3 text-xs text-neutral-800 focus:border-[#0F172A] focus:outline-none transition shadow-2xs"
             />
           </div>
         </div>
 
         {/* Data Grid Table */}
-        <div className="overflow-x-auto rounded-xl border border-neutral-200/90 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-2xs">
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-xs text-neutral-400">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Loading portfolio matrix…
+            <div className="flex items-center justify-center py-20 text-xs text-neutral-400">
+              <Loader2 className="h-5 w-5 animate-spin text-amber-600 mr-2" />
+              <span>Building due diligence metadata matrix…</span>
             </div>
           ) : error ? (
             <div className="p-6 text-xs text-rose-700">{error}</div>
           ) : filteredDocs.length === 0 ? (
-            <div className="p-12 text-center text-xs text-neutral-400">
-              No documents found matching "{search}".
+            <div className="p-16 text-center text-xs text-neutral-400">
+              No contracts found matching "{search}".
             </div>
           ) : (
-            <table className="w-full text-left text-xs text-neutral-700">
-              <thead className="border-b border-neutral-200 bg-neutral-50/70 text-[11px] font-semibold text-neutral-900">
+            <table className="w-full text-left text-xs text-[#0F172A] border-collapse">
+              <thead className="border-b border-[#E2E8F0] bg-[#F8F9FA] text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-3">Contract File</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Identified Parties</th>
-                  <th className="px-4 py-3">Effective Date</th>
-                  <th className="px-4 py-3">Governing Law</th>
-                  <th className="px-4 py-3">Payment Terms</th>
-                  <th className="px-4 py-3">Liability Cap</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3.5 font-semibold">Contract Docket</th>
+                  <th className="px-4 py-3.5 font-semibold">Agreement Type</th>
+                  <th className="px-4 py-3.5 font-semibold">Identified Parties</th>
+                  <th className="px-4 py-3.5 font-semibold">Effective Date</th>
+                  <th className="px-4 py-3.5 font-semibold">Governing Law</th>
+                  <th className="px-4 py-3.5 font-semibold">Payment Terms</th>
+                  <th className="px-4 py-3.5 font-semibold">Liability Cap</th>
+                  <th className="px-4 py-3.5 text-right font-semibold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100 font-sans">
-                {filteredDocs.map((doc: PortfolioItem) => (
-                  <tr key={doc.id} className="hover:bg-neutral-50/60 transition">
-                    <td className="px-4 py-3 font-medium text-neutral-900 max-w-[200px] truncate">
+              <tbody className="divide-y divide-[#F1F5F9]">
+                {filteredDocs.map((item: PortfolioItem) => (
+                  <tr key={item.id} className="hover:bg-amber-50/15 transition group">
+                    <td className="px-4 py-3.5 font-semibold text-[#0F172A] max-w-[200px] truncate">
                       <Link
-                        to={`/documents/${doc.id}`}
-                        className="hover:text-amber-800 hover:underline flex items-center gap-1.5"
+                        to={`/documents/${item.id}`}
+                        className="group-hover:text-amber-800 transition line-clamp-1"
                       >
-                        <span className="truncate">{doc.filename}</span>
+                        {item.filename}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 font-mono text-[11px]">
-                      {doc.agreement_type || "Commercial Agreement"}
+                    <td className="px-4 py-3.5 text-neutral-600 font-mono text-[11px]">
+                      {item.agreement_type || "Commercial Contract"}
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 max-w-[180px] truncate">
-                      {doc.parties.length > 0 ? doc.parties.join(", ") : "—"}
+                    <td className="px-4 py-3.5 text-neutral-600 max-w-[180px] truncate">
+                      {item.parties.length > 0 ? item.parties.join(", ") : "—"}
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 font-mono text-[11px]">
-                      {doc.effective_date || "—"}
+                    <td className="px-4 py-3.5 text-neutral-600 font-mono text-[11px]">
+                      {item.effective_date || "—"}
                     </td>
-                    <td className="px-4 py-3">
-                      {doc.governing_law ? (
-                        <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-800">
-                          {doc.governing_law}
+                    <td className="px-4 py-3.5">
+                      {item.governing_law ? (
+                        <span className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-800 border border-neutral-200">
+                          {item.governing_law}
                         </span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 text-[11px] truncate max-w-[140px]">
-                      {doc.payment_terms || "—"}
+                    <td className="px-4 py-3.5 text-neutral-600 text-[11px] truncate max-w-[140px]">
+                      {item.payment_terms || "—"}
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 text-[11px] truncate max-w-[140px]">
-                      {doc.liability_cap || "—"}
+                    <td className="px-4 py-3.5 text-neutral-600 text-[11px] truncate max-w-[140px]">
+                      {item.liability_cap || "—"}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
                       <Link
-                        to={`/documents/${doc.id}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-neutral-700 hover:text-neutral-950 underline"
+                        to={`/documents/${item.id}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-[#E2E8F0] bg-white px-2.5 py-1 text-[11px] font-semibold text-neutral-700 hover:bg-[#F8F9FA] transition shadow-2xs"
                       >
-                        <span>Open</span>
+                        <span>Inspect</span>
                         <ExternalLink className="h-3 w-3" />
                       </Link>
                     </td>

@@ -113,26 +113,31 @@ export function AuditLogsPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 px-6 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">Compliance Audit Trail</h1>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-mono text-neutral-400 uppercase tracking-wider font-semibold">
+              {currentOrg?.name ?? "Firm Governance"}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase font-mono">
+              <ShieldCheck className="h-3 w-3 text-emerald-600" />
               <span>SOC 2 Type II Immutable</span>
             </span>
           </div>
-          <p className="mt-1 text-xs text-neutral-500">
-            Cryptographically signed record of contract uploads, redline exports, team changes, and policy modifications.
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+            Compliance Audit Ledger & Governance
+          </h1>
+          <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+            Cryptographically signed ledger recording all document access, redline exports, client member invitations, and playbook policy modifications.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={loadLogs}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 hover:bg-[#F8F9FA] transition shadow-2xs"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -140,42 +145,42 @@ export function AuditLogsPage() {
           <button
             onClick={handleExportCsv}
             disabled={exporting}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50 transition shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50 transition shadow-sm"
           >
-            {exporting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            <span>Export CSV</span>
+            {exporting ? <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-400" /> : <Download className="h-3.5 w-3.5 text-amber-400" />}
+            <span>Export Compliance CSV</span>
           </button>
         </div>
       </div>
 
       {/* Governance Banner */}
-      <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/60 p-4 text-xs text-neutral-600 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white border border-neutral-200 text-neutral-700 shadow-sm">
-            <Lock className="h-4 w-4" />
+      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 text-xs text-neutral-600 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FA] border border-[#E2E8F0] text-[#0F172A] shadow-2xs">
+            <Lock className="h-4 w-4 text-amber-700" />
           </div>
           <div>
-            <div className="font-semibold text-neutral-900">Zero Retention & Immutable Ledger</div>
-            <div className="text-[11px] text-neutral-500">
-              Inference is executed exclusively in-process or via Sovereign Local LLMs. Audit logs cannot be altered or deleted.
+            <div className="font-bold text-sm text-[#0F172A] font-serif-legal">Zero Data Egress & Tamper-Evident Ledger</div>
+            <div className="text-[11px] text-neutral-500 leading-relaxed">
+              Inference is executed exclusively in-process or via Sovereign Local LLMs. Audit records cannot be altered or purged.
             </div>
           </div>
         </div>
-        <div className="text-[11px] text-neutral-400 font-mono">
-          Organization ID: {currentOrg?.id}
+        <div className="text-[11px] text-neutral-400 font-mono bg-[#F8F9FA] px-2.5 py-1 rounded-md border border-[#E2E8F0]">
+          Tenant UID: {currentOrg?.id}
         </div>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative max-w-sm flex-1">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by actor, action, resource..."
-            className="w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-neutral-900 focus:outline-none"
+            placeholder="Search by actor email, action, or resource ID…"
+            className="w-full rounded-xl border border-[#E2E8F0] bg-white pl-9 pr-3 py-2 text-xs text-[#0F172A] placeholder-neutral-400 focus:border-[#0F172A] focus:outline-none transition shadow-2xs"
           />
         </div>
 
@@ -184,13 +189,13 @@ export function AuditLogsPage() {
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs text-[#0F172A] font-medium focus:border-[#0F172A] focus:outline-none transition shadow-2xs"
           >
-            <option value="ALL">All Actions</option>
-            <option value="upload">Uploads (document.upload)</option>
-            <option value="export">Exports (export_redline)</option>
+            <option value="ALL">All Recorded Actions</option>
+            <option value="upload">Document Uploads (document.upload)</option>
+            <option value="export">Redline Exports (export_redline)</option>
             <option value="delete">Deletions (document.delete)</option>
-            <option value="member">Team Governance</option>
+            <option value="member">Team Governance & Invites</option>
           </select>
         </div>
       </div>

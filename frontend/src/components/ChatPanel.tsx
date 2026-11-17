@@ -125,22 +125,22 @@ export function ChatPanel({ doc, onSelectCitation }: Props) {
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg p-3.5 text-xs sm:text-sm leading-relaxed ${
+              className={`max-w-[85%] rounded-xl p-4 text-xs sm:text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-neutral-900 text-white"
-                  : "border border-neutral-200 bg-neutral-50/70 text-neutral-800"
+                  ? "bg-[#0F172A] text-white shadow-xs"
+                  : "border border-[#E2E8F0] bg-[#FAF9F6] text-neutral-800 shadow-2xs"
               }`}
             >
               {m.role === "assistant" ? (
                 <>
-                  <div className="prose-xs max-w-none text-neutral-800 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-4 [&_li]:my-0.5 [&_strong]:text-neutral-950 font-serif">
-                    <Markdown>{m.content || "Searching document…"}</Markdown>
+                  <div className="prose-xs max-w-none text-neutral-900 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-4 [&_li]:my-0.5 [&_strong]:text-[#0F172A] font-serif-legal text-[13px] leading-relaxed">
+                    <Markdown>{m.content || "Analyzing legal provisions…"}</Markdown>
                   </div>
 
                   {m.citations && m.citations.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-neutral-200/80 flex flex-wrap items-center justify-between gap-2">
+                    <div className="mt-3.5 pt-2.5 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap gap-1.5 items-center">
-                        <span className="text-[10px] text-neutral-400 font-mono mr-1">Citations:</span>
+                        <span className="text-[10px] text-neutral-400 font-mono-legal mr-1">Citations:</span>
                         {m.citations.map((c) => (
                           <button
                             key={c.n}
@@ -148,7 +148,7 @@ export function ChatPanel({ doc, onSelectCitation }: Props) {
                               setActiveCitation(c);
                               if (onSelectCitation) onSelectCitation(c);
                             }}
-                            className="flex items-center gap-1 rounded bg-white border border-neutral-200 px-2 py-0.5 text-[10px] font-mono text-neutral-700 hover:text-neutral-950 hover:border-neutral-400 transition"
+                            className="flex items-center gap-1 rounded bg-white border border-[#E2E8F0] px-2 py-0.5 text-[10px] font-mono-legal text-neutral-700 hover:text-[#0F172A] hover:border-amber-400 hover:bg-amber-50/50 transition"
                             title="Inspect in document"
                           >
                             <span>

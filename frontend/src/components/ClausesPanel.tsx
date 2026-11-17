@@ -159,17 +159,17 @@ export function ClausesPanel({ doc }: { doc: DocumentOut }) {
           return (
             <div
               key={c.id}
-              className="rounded-xl border border-neutral-200 bg-white transition hover:border-neutral-300"
+              className="rounded-xl border border-[#E2E8F0] bg-white transition hover:border-neutral-300 shadow-2xs"
             >
               <button
                 onClick={() => toggleOpen(c.id)}
                 className="flex w-full items-center justify-between gap-4 p-3.5 text-left"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-xs sm:text-sm font-semibold text-neutral-900">
+                  <div className="truncate text-xs sm:text-sm font-semibold text-[#0F172A] font-serif-legal">
                     {c.title || c.section_path || TYPE_LABELS[c.clause_type] || c.clause_type}
                   </div>
-                  <div className="text-[11px] text-neutral-400 mt-0.5">
+                  <div className="text-[11px] text-neutral-400 mt-0.5 font-mono-legal">
                     {TYPE_LABELS[c.clause_type] ?? c.clause_type}
                     {c.section_path && c.section_path !== c.title ? ` · ${c.section_path}` : ""}
                   </div>
@@ -177,16 +177,16 @@ export function ClausesPanel({ doc }: { doc: DocumentOut }) {
 
                 <div className="flex shrink-0 items-center gap-2 text-neutral-400">
                   {c.page_start !== null && (
-                    <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] font-mono text-neutral-600">
+                    <span className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-mono-legal text-neutral-700 border border-neutral-200">
                       p. {c.page_start}
                     </span>
                   )}
-                  {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {isOpen ? <ChevronDown className="h-4 w-4 text-neutral-600" /> : <ChevronRight className="h-4 w-4" />}
                 </div>
               </button>
 
               {isOpen && (
-                <div className="border-t border-neutral-100 p-4 text-xs leading-relaxed text-neutral-700 whitespace-pre-wrap bg-neutral-50/50 rounded-b-xl font-sans">
+                <div className="border-t border-[#E2E8F0] p-4 text-xs leading-relaxed text-neutral-800 whitespace-pre-wrap bg-[#FAF9F6] rounded-b-xl font-serif-legal text-[13px]">
                   {c.text}
                 </div>
               )}

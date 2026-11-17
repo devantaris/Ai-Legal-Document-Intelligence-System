@@ -14,19 +14,19 @@ function TermCard({
 }) {
   return (
     <div
-      className={`rounded-xl border border-neutral-200 bg-white p-4 ${
+      className={`rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-2xs ${
         wide ? "sm:col-span-2" : ""
       }`}
     >
-      <div className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+      <div className="text-[10px] font-mono-legal uppercase tracking-wider text-neutral-400 font-semibold">
         {label}
       </div>
       <div
-        className={`mt-1.5 text-xs sm:text-sm font-medium leading-relaxed ${
-          value ? "text-neutral-900" : "italic text-neutral-400"
+        className={`mt-1.5 text-xs sm:text-sm font-medium leading-relaxed font-serif-legal ${
+          value ? "text-[#0F172A]" : "italic text-neutral-400"
         }`}
       >
-        {value || "Not specified in document"}
+        {value || "Not specified in contract provisions"}
       </div>
     </div>
   );
@@ -78,7 +78,7 @@ export function KeyTermsPanel({ doc }: { doc: DocumentOut }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {terms.agreement_type && (
-            <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-800">
+            <span className="rounded-md bg-[#FAF9F6] border border-[#E2E8F0] px-2.5 py-1 text-xs font-semibold text-[#0F172A] font-serif-legal">
               {terms.agreement_type}
             </span>
           )}
@@ -87,10 +87,10 @@ export function KeyTermsPanel({ doc }: { doc: DocumentOut }) {
         <button
           onClick={() => void load(true)}
           disabled={busy}
-          className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-600 hover:bg-neutral-50 transition disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-[#F8F9FA] transition disabled:opacity-50 shadow-2xs"
         >
           <RefreshCw className={`h-3 w-3 ${busy ? "animate-spin" : ""}`} />
-          <span>{busy ? "Working…" : "Re-extract"}</span>
+          <span>{busy ? "Extracting…" : "Re-extract Terms"}</span>
         </button>
       </div>
 

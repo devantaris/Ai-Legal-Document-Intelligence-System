@@ -6,7 +6,6 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Building2,
   Lock,
 } from "lucide-react";
 import { useTenant } from "../stores/tenant";
@@ -132,29 +131,30 @@ export function TeamPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-8 space-y-6">
+    <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E2E8F0] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-neutral-500 uppercase tracking-wider">
-            <Building2 className="h-3.5 w-3.5" />
-            <span>{currentOrg?.name ?? "Organization"}</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1.5">
+            <span className="font-semibold text-neutral-700">{currentOrg?.name ?? "Firm Organization"}</span>
+            <span>•</span>
+            <span className="text-amber-700 font-semibold font-mono">RBAC Security Boundary</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900">
-            Team & Role-Based Access Control
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+            Practice Team & Role-Based Access Control
           </h1>
-          <p className="mt-1 text-xs text-neutral-500">
-            Manage legal counsel, partners, and reviewers with strictly partitioned tenant permissions.
+          <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+            Manage partners, senior counsel, junior reviewers, and external auditors with strictly partitioned tenant permissions.
           </p>
         </div>
 
         {isOwnerOrAdmin && (
           <button
             onClick={() => setInviteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-3.5 py-2 text-xs font-medium text-white shadow-sm hover:bg-neutral-800 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800 transition"
           >
-            <UserPlus className="h-3.5 w-3.5" />
-            <span>Invite Member</span>
+            <UserPlus className="h-3.5 w-3.5 text-amber-400" />
+            <span>Invite Colleague</span>
           </button>
         )}
       </div>

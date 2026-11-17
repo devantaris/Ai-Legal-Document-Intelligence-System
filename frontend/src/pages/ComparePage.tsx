@@ -56,24 +56,31 @@ export function ComparePage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-8">
+    <div className="mx-auto max-w-5xl px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-900">Compare Documents</h1>
-        <p className="mt-0.5 text-xs text-neutral-500">
-          Aligns clauses between two versions and summarizes changes.
+      <div className="border-b border-[#E2E8F0] pb-6">
+        <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1.5">
+          <span className="font-semibold text-neutral-700">Contract Analysis</span>
+          <span>•</span>
+          <span className="text-amber-700 font-semibold font-mono">Bilateral Redline Diff</span>
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+          Bilateral Contract Redline & Diff Engine
+        </h1>
+        <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+          Semantically aligns clauses between two contract versions, identifying substantive legal modifications, unilateral insertions, and omissions.
         </p>
       </div>
 
       {/* Selectors */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <select
             value={aId}
             onChange={(e) => setAId(e.target.value)}
-            className="w-full flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-800 outline-none focus:border-neutral-400"
+            className="w-full flex-1 rounded-lg border border-[#E2E8F0] px-3 py-2 text-xs text-[#0F172A] outline-none focus:border-[#0F172A]"
           >
-            <option value="">Version A (Original)…</option>
+            <option value="">Version A (Original / Baseline)…</option>
             {ready.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.filename}
@@ -81,14 +88,14 @@ export function ComparePage() {
             ))}
           </select>
 
-          <span className="text-xs text-neutral-400 font-medium">vs</span>
+          <span className="text-xs text-neutral-400 font-mono-legal px-2">vs</span>
 
           <select
             value={bId}
             onChange={(e) => setBId(e.target.value)}
-            className="w-full flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-800 outline-none focus:border-neutral-400"
+            className="w-full flex-1 rounded-lg border border-[#E2E8F0] px-3 py-2 text-xs text-[#0F172A] outline-none focus:border-[#0F172A]"
           >
-            <option value="">Version B (Revised)…</option>
+            <option value="">Version B (Counterparty Markup / Revised)…</option>
             {ready.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.filename}
@@ -99,15 +106,15 @@ export function ComparePage() {
           <button
             onClick={() => void run()}
             disabled={busy || !aId || !bId || aId === bId}
-            className="w-full sm:w-auto rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition disabled:opacity-40"
+            className="w-full sm:w-auto rounded-lg bg-[#0F172A] px-5 py-2 text-xs font-semibold text-white hover:bg-neutral-800 transition disabled:opacity-40 shadow-sm"
           >
-            {busy ? "Comparing…" : "Compare"}
+            {busy ? "Comparing…" : "Execute Diff"}
           </button>
         </div>
 
         {ready.length < 2 && (
-          <p className="mt-2.5 text-[11px] text-amber-700">
-            You need at least two ready documents to run a comparison.
+          <p className="mt-2.5 text-[11px] text-amber-700 font-mono-legal">
+            Requires at least two processed documents in the workspace to execute bilateral comparison.
           </p>
         )}
       </div>
@@ -129,28 +136,28 @@ export function ComparePage() {
       {result && (
         <div className="mt-6 space-y-4">
           {/* Executive Summary */}
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <div className="text-xs font-semibold text-neutral-900 mb-1">Summary of Changes</div>
-            <p className="text-xs text-neutral-700 leading-relaxed">{result.summary}</p>
+          <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+            <div className="text-sm font-semibold text-[#0F172A] font-serif-legal mb-1">Diligence Redline Summary</div>
+            <p className="text-xs text-neutral-700 leading-relaxed font-sans">{result.summary}</p>
 
-            <div className="mt-3 pt-2.5 border-t border-neutral-100 flex flex-wrap gap-4 text-[11px] text-neutral-500 font-mono">
-              <span>{result.counts.unchanged} unchanged</span>
-              <span>{result.counts.modified} modified</span>
-              <span>{result.counts.added} added in B</span>
-              <span>{result.counts.removed} removed from A</span>
+            <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex flex-wrap gap-4 text-[11px] text-neutral-500 font-mono-legal">
+              <span className="text-neutral-600">{result.counts.unchanged} unchanged</span>
+              <span className="text-amber-800 font-semibold">{result.counts.modified} modified</span>
+              <span className="text-emerald-800 font-semibold">{result.counts.added} added in B</span>
+              <span className="text-rose-800 font-semibold">{result.counts.removed} removed from A</span>
             </div>
           </div>
 
           {/* Compared Clauses */}
           <div className="space-y-3">
             {result.items.map((item, i) => (
-              <div key={i} className="rounded-xl border border-neutral-200 bg-white p-4 space-y-2">
+              <div key={i} className="rounded-xl border border-[#E2E8F0] bg-white p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-xs sm:text-sm font-semibold text-neutral-900 truncate">
+                  <div className="text-sm font-semibold text-[#0F172A] font-serif-legal truncate">
                     {item.a?.title || item.b?.title || "(untitled clause)"}
                   </div>
                   <span
-                    className={`rounded-md border px-2 py-0.5 text-[10px] font-medium uppercase font-mono ${
+                    className={`rounded-md border px-2.5 py-0.5 text-[10px] font-semibold uppercase font-mono-legal ${
                       LEVEL_STYLES[item.status === "modified" ? item.change_level : item.status] ??
                       LEVEL_STYLES.unchanged
                     }`}
@@ -160,23 +167,23 @@ export function ComparePage() {
                 </div>
 
                 {item.change_summary && (
-                  <p className="text-xs text-neutral-600 leading-relaxed bg-neutral-50 p-2.5 rounded-lg border border-neutral-100">
+                  <p className="text-xs text-neutral-700 leading-relaxed bg-[#FAF9F6] p-3 rounded-lg border border-[#E2E8F0]">
                     {item.change_summary}
                   </p>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                   {item.a && (
-                    <div className="rounded-lg border border-neutral-100 bg-neutral-50/50 p-3 text-xs leading-relaxed text-neutral-700">
-                      <div className="text-[10px] font-mono text-neutral-400 mb-1">
+                    <div className="rounded-lg border border-[#E2E8F0] bg-[#FAF9F6] p-3 text-xs leading-relaxed text-neutral-800 font-serif-legal">
+                      <div className="text-[10px] font-mono-legal text-neutral-500 mb-1.5 uppercase tracking-wider font-semibold">
                         Version A{item.a.page_start !== null ? ` · p. ${item.a.page_start}` : ""}
                       </div>
                       <div className="whitespace-pre-wrap">{item.a.text}</div>
                     </div>
                   )}
                   {item.b && (
-                    <div className="rounded-lg border border-neutral-100 bg-neutral-50/50 p-3 text-xs leading-relaxed text-neutral-700">
-                      <div className="text-[10px] font-mono text-neutral-400 mb-1">
+                    <div className="rounded-lg border border-[#E2E8F0] bg-white p-3 text-xs leading-relaxed text-[#0F172A] font-serif-legal">
+                      <div className="text-[10px] font-mono-legal text-neutral-500 mb-1.5 uppercase tracking-wider font-semibold">
                         Version B{item.b.page_start !== null ? ` · p. ${item.b.page_start}` : ""}
                       </div>
                       <div className="whitespace-pre-wrap">{item.b.text}</div>

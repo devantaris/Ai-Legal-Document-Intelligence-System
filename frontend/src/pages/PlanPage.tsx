@@ -77,38 +77,40 @@ export function PlanPage() {
   return (
     <div className="mx-auto max-w-5xl px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="border-b border-neutral-200/80 pb-6">
-        <div className="flex items-center gap-2 text-xs font-mono text-neutral-500 uppercase tracking-wider">
-          <Scale className="h-3.5 w-3.5" />
-          <span>{currentOrg?.name ?? "Organization"} Plan & Usage</span>
+      <div className="border-b border-[#E2E8F0] pb-6">
+        <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1.5">
+          <Scale className="h-3.5 w-3.5 text-neutral-500" />
+          <span className="font-semibold text-neutral-700">{currentOrg?.name ?? "Firm Organization"}</span>
+          <span>•</span>
+          <span className="text-amber-700 font-semibold font-mono">Sovereign Quota Metering</span>
         </div>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900">
-          SaaS Tiers & Sovereign Resource Metering
+        <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+          SaaS Tiers & Sovereign Compute Accounting
         </h1>
-        <p className="mt-1 text-xs text-neutral-500">
-          Transparent compute and storage accounting with strict on-premise attorney-client privilege.
+        <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+          Transparent local compute and storage accounting with ironclad attorney-client privilege and zero-cloud retention.
         </p>
       </div>
 
       {/* Sovereign Assurance Card */}
-      <div className="rounded-xl border border-neutral-200 bg-neutral-900 text-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="rounded-xl border border-neutral-800 bg-[#0F172A] text-white p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-2xl">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400">
+            <span className="text-[11px] font-mono-legal uppercase tracking-wider text-emerald-400 font-semibold">
               100% Sovereign Guarantee
             </span>
           </div>
-          <h2 className="text-base font-semibold">Zero-Cloud Retention Privacy Architecture</h2>
-          <p className="text-xs text-neutral-400 leading-relaxed">
-            Your legal agreements, defined-term graphs, and redline drafts execute entirely inside your sovereign local boundary. No data is transmitted to public cloud LLMs or used to train third-party models.
+          <h2 className="text-base font-semibold font-serif-legal text-white">Zero-Cloud Retention Privacy Architecture</h2>
+          <p className="text-xs text-neutral-300 leading-relaxed">
+            Your legal agreements, defined-term graphs, and redline drafts execute entirely inside your sovereign local boundary. No contract text or embeddings are transmitted to public cloud LLMs or used to train external models.
           </p>
         </div>
 
-        <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 px-4 py-3 text-center shrink-0">
-          <div className="text-[11px] text-neutral-400 uppercase tracking-wider font-mono">Status</div>
-          <div className="text-sm font-semibold text-emerald-400 mt-0.5">Sovereign Pro Active</div>
-          <div className="text-[10px] text-neutral-500 mt-0.5">Commercial Gateway: Coming Soon</div>
+        <div className="rounded-lg border border-neutral-700 bg-neutral-900/90 px-5 py-3 text-center shrink-0">
+          <div className="text-[10px] text-neutral-400 uppercase tracking-wider font-mono-legal">Current Deployment</div>
+          <div className="text-sm font-semibold text-amber-400 mt-0.5 font-serif-legal">Sovereign Pro Active</div>
+          <div className="text-[10px] text-neutral-400 mt-0.5 font-mono-legal">Commercial Gateway: Ready</div>
         </div>
       </div>
 
@@ -180,16 +182,16 @@ export function PlanPage() {
               key={tier.name}
               className={`rounded-xl p-5 flex flex-col justify-between transition ${
                 tier.highlighted
-                  ? "border-2 border-neutral-900 bg-white shadow-md relative"
-                  : "border border-neutral-200/80 bg-white"
+                  ? "border-2 border-[#0F172A] bg-white shadow-md relative ring-1 ring-[#0F172A]/10"
+                  : "border border-[#E2E8F0] bg-white hover:border-neutral-300"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                    className={`text-[10px] font-mono-legal px-2.5 py-0.5 rounded-full border ${
                       tier.highlighted
-                        ? "bg-neutral-900 text-white border-neutral-900"
+                        ? "bg-[#0F172A] text-amber-300 border-[#0F172A]"
                         : "bg-neutral-100 text-neutral-600 border-neutral-200"
                     }`}
                   >
@@ -197,10 +199,10 @@ export function PlanPage() {
                   </span>
                 </div>
 
-                <h3 className="mt-3 text-base font-bold text-neutral-900">{tier.name}</h3>
+                <h3 className="mt-3 text-base font-bold text-[#0F172A] font-serif-legal">{tier.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-neutral-900">{tier.price}</span>
-                  <span className="text-xs text-neutral-500">{tier.cadence}</span>
+                  <span className="text-2xl font-black text-[#0F172A] font-mono-legal">{tier.price}</span>
+                  <span className="text-xs text-neutral-500 font-mono-legal">{tier.cadence}</span>
                 </div>
                 <p className="mt-2 text-xs text-neutral-600 leading-relaxed">{tier.desc}</p>
 

@@ -69,27 +69,29 @@ export function WorkspacesPage() {
   return (
     <div className="mx-auto max-w-5xl px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E2E8F0] pb-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-neutral-500 uppercase tracking-wider">
-            <Building2 className="h-3.5 w-3.5" />
-            <span>{currentOrg?.name ?? "Organization"}</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1.5">
+            <Building2 className="h-3.5 w-3.5 text-neutral-500" />
+            <span className="font-semibold text-neutral-700">{currentOrg?.name ?? "Firm Organization"}</span>
+            <span>•</span>
+            <span className="text-amber-700 font-semibold font-mono">Matter Partitions</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900">
-            Workspaces & Legal Matters
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+            Matter Deal Rooms & Workspaces
           </h1>
-          <p className="mt-1 text-xs text-neutral-500">
-            Organize agreements by transaction, corporate acquisition, or client matter with partitioned repositories.
+          <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+            Partition contract repositories, M&A due diligence vaults, and client matters with strict sovereign isolation.
           </p>
         </div>
 
         {currentOrg?.role !== "viewer" && (
           <button
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-3.5 py-2 text-xs font-medium text-white shadow-sm hover:bg-neutral-800 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800 transition"
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>New Workspace</span>
+            <Plus className="h-3.5 w-3.5 text-amber-400" />
+            <span>New Matter Room</span>
           </button>
         )}
       </div>
@@ -104,12 +106,12 @@ export function WorkspacesPage() {
 
       {/* Create Modal / Form */}
       {createOpen && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-neutral-900">Create New Matter Workspace</h2>
+            <h2 className="text-sm font-semibold text-[#0F172A] font-serif-legal">Initialize New Matter Workspace</h2>
             <button
               onClick={() => setCreateOpen(false)}
-              className="text-xs text-neutral-400 hover:text-neutral-600"
+              className="text-xs text-neutral-400 hover:text-neutral-600 font-mono"
             >
               Cancel
             </button>
@@ -117,7 +119,7 @@ export function WorkspacesPage() {
           <form onSubmit={handleCreate} className="space-y-3">
             <div>
               <label className="block text-[11px] font-medium text-neutral-600 mb-1">
-                Workspace Name
+                Matter / Workspace Name
               </label>
               <input
                 type="text"
@@ -125,35 +127,35 @@ export function WorkspacesPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Project Apollo M&A Acquisition, Vendor MSAs 2026..."
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none"
+                className="w-full rounded-lg border border-[#E2E8F0] px-3 py-2 text-xs text-[#0F172A] focus:border-[#0F172A] focus:outline-none"
               />
             </div>
             <div>
               <label className="block text-[11px] font-medium text-neutral-600 mb-1">
-                Matter Scope / Description (Optional)
+                Matter Scope / Legal Context (Optional)
               </label>
               <textarea
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Briefly describe the legal engagement, counterparties, or review guidelines..."
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-xs focus:border-neutral-900 focus:outline-none"
+                className="w-full rounded-lg border border-[#E2E8F0] px-3 py-2 text-xs text-[#0F172A] focus:border-[#0F172A] focus:outline-none"
               />
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setCreateOpen(false)}
-                className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50"
+                className="rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-[#F8F9FA]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-lg bg-neutral-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+                className="rounded-lg bg-[#0F172A] px-4 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
               >
-                {submitting ? "Creating…" : "Create Workspace"}
+                {submitting ? "Initializing…" : "Create Matter Room"}
               </button>
             </div>
           </form>
@@ -170,8 +172,8 @@ export function WorkspacesPage() {
               key={ws.id}
               className={`rounded-xl border p-5 transition flex flex-col justify-between ${
                 isActive
-                  ? "border-neutral-900 bg-white ring-1 ring-neutral-900 shadow-sm"
-                  : "border-neutral-200/80 bg-white hover:border-neutral-300"
+                  ? "border-[#0F172A] bg-white ring-1 ring-[#0F172A] shadow-sm"
+                  : "border-[#E2E8F0] bg-white hover:border-neutral-300"
               }`}
             >
               <div>
@@ -179,35 +181,35 @@ export function WorkspacesPage() {
                   <div className="flex items-center gap-2.5">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        isActive ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"
+                        isActive ? "bg-[#0F172A] text-amber-400" : "bg-neutral-100 text-neutral-600"
                       }`}
                     >
                       <FolderKanban className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-neutral-900">{ws.name}</h3>
-                      <div className="text-[11px] text-neutral-400">
-                        Created {new Date(ws.created_at).toLocaleDateString()}
+                      <h3 className="text-sm font-semibold text-[#0F172A] font-serif-legal">{ws.name}</h3>
+                      <div className="text-[11px] text-neutral-400 font-mono-legal">
+                        Initialized {new Date(ws.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
 
                   {isActive && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700">
-                      <Check className="h-3 w-3" />
-                      Active
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 text-[10px] font-medium text-amber-800 font-mono-legal">
+                      <Check className="h-3 w-3 text-amber-700" />
+                      Active Matter
                     </span>
                   )}
                 </div>
 
-                <p className="mt-3 text-xs text-neutral-600 line-clamp-2">
-                  {ws.description || "No specific matter description provided."}
+                <p className="mt-3 text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                  {ws.description || "No specific matter description recorded."}
                 </p>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-neutral-100 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-                  <FileText className="h-3.5 w-3.5" />
+              <div className="mt-5 pt-4 border-t border-[#E2E8F0] flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-mono-legal">
+                  <FileText className="h-3.5 w-3.5 text-neutral-400" />
                   <span>{ws.document_count} contracts indexed</span>
                 </div>
 
@@ -215,7 +217,7 @@ export function WorkspacesPage() {
                   {!isActive && (
                     <button
                       onClick={() => selectWorkspace(ws.id)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-[#F8F9FA] hover:border-neutral-300 transition"
                     >
                       <FolderOpen className="h-3.5 w-3.5" />
                       <span>Switch</span>
@@ -226,7 +228,7 @@ export function WorkspacesPage() {
                     <button
                       onClick={() => handleDelete(ws.id, ws.name)}
                       className="rounded p-1 text-neutral-400 hover:text-rose-600 transition"
-                      title="Delete Workspace"
+                      title="Delete Matter"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

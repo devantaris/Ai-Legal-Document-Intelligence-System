@@ -166,53 +166,58 @@ export function PlaybooksPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 px-6 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900">Contract Playbooks</h1>
-            <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-mono text-neutral-400 uppercase tracking-wider font-semibold">
+              {currentOrg?.name ?? "Firm Standard"}
+            </span>
+            <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 uppercase font-mono">
               Institutional Standards
             </span>
           </div>
-          <p className="mt-1 text-xs text-neutral-500">
-            Customize corporate legal positions, trigger phrases, and fallback drafts used for automated contract reviews.
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] font-serif-legal">
+            Negotiation Playbooks & Policies
+          </h1>
+          <p className="mt-1 text-xs text-neutral-500 max-w-2xl leading-relaxed">
+            Customize firm-wide negotiation thresholds, preferred positions, unacceptable trigger words, and 3-tier fallback drafts used by the automated review engine.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={loadPlaybooks}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 hover:bg-[#F8F9FA] transition shadow-2xs"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
           </button>
           <button
             onClick={handleOpenCreate}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800 transition shadow-sm"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 text-amber-400" />
             <span>New Playbook</span>
           </button>
         </div>
       </div>
 
       {/* Filter / Search Bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search playbooks by name or standard..."
-            className="w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:border-neutral-900 focus:outline-none"
+            placeholder="Search playbooks by policy name or description…"
+            className="w-full rounded-xl border border-[#E2E8F0] bg-white pl-9 pr-3 py-2 text-xs text-[#0F172A] placeholder-neutral-400 focus:border-[#0F172A] focus:outline-none transition shadow-2xs"
           />
         </div>
-        <div className="text-xs text-neutral-400">
-          Active Org: <strong className="text-neutral-700">{currentOrg?.name ?? "Default"}</strong>
+        <div className="text-xs text-neutral-500 font-mono">
+          Client Org: <strong className="text-[#0F172A]">{currentOrg?.name ?? "Default"}</strong>
         </div>
       </div>
 
