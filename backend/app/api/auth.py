@@ -1,3 +1,4 @@
+import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,7 +14,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models import User
+from app.models import MemberStatus, OrgRole, Organization, OrganizationMember, User, Workspace
 from app.schemas import LoginIn, RefreshIn, RegisterIn, TokenOut, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -31,9 +32,46 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)) -> TokenOut:
     email = payload.email.lower().strip()
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
-    user = User(email=email, password_hash=hash_password(payload.password))
+
+    user = User(
+        email=email,
+        full_name=payload.full_name,
+        password_hash=hash_password(payload.password),
+    )
     db.add(user)
+    db.flush()
+
+    # Create default organization & workspace for the new user
+    username = email.split("@")[0]
+    cleaned = re.sub(r"[^a-zA-Z0-9]", "", username) or "user"
+    org_name = f"{cleaned.title()}'s Legal Org"
+    org_slug = f"{cleaned.lower()}-{user.id.hex[:6]}"
+
+    org = Organization(
+        name=org_name,
+        slug=org_slug,
+        plan_tier="sovereign_pro",
+        settings={},
+    )
+    db.add(org)
+    db.flush()
+
+    member = OrganizationMember(
+        org_id=org.id,
+        user_id=user.id,
+        role=OrgRole.OWNER.value,
+        status=MemberStatus.ACTIVE.value,
+    )
+    db.add(member)
+
+    workspace = Workspace(
+        org_id=org.id,
+        name="General Matters",
+        description="Default workspace for corporate contracts",
+    )
+    db.add(workspace)
     db.commit()
+
     return _tokens(user)
 
 

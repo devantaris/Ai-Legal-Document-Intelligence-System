@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict
 
 class DocumentOut(BaseModel):
     id: uuid.UUID
+    org_id: uuid.UUID | None = None
+    workspace_id: uuid.UUID | None = None
     filename: str
     mime: str
     status: str
@@ -56,4 +58,3 @@ class DocumentContentOut(BaseModel):
     filename: str
     page_count: int | None
     chunks: list[ChunkLite]
-
