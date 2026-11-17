@@ -8,6 +8,8 @@ export interface User {
 
 export interface DocumentOut {
   id: string;
+  org_id?: string | null;
+  workspace_id?: string | null;
   filename: string;
   mime: string;
   status: DocStatus;
@@ -218,6 +220,52 @@ export interface EntailmentAuditOut {
   verified_count: number;
   total_count: number;
   sentence_audits: SentenceAudit[];
+}
+
+export type OrgRole = "owner" | "admin" | "counsel" | "reviewer" | "viewer";
+export type MemberStatus = "active" | "invited" | "suspended";
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  plan_tier: string;
+  role: OrgRole;
+  member_count: number;
+  workspace_count: number;
+  created_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: OrgRole;
+  status: MemberStatus;
+  joined_at: string;
+}
+
+export interface Workspace {
+  id: string;
+  org_id: string;
+  name: string;
+  description: string | null;
+  document_count: number;
+  created_at: string;
+}
+
+export interface OrgUsage {
+  plan_tier: string;
+  plan_display: string;
+  status_label: string;
+  members_count: number;
+  workspaces_count: number;
+  documents_count: number;
+  pages_processed: number;
+  storage_bytes: number;
+  sovereign_inference: boolean;
+  features: string[];
 }
 
 

@@ -2,6 +2,8 @@ const BASE = "/api";
 
 const ACCESS_KEY = "lda_access_token";
 const REFRESH_KEY = "lda_refresh_token";
+const ORG_KEY = "lda_active_org_id";
+const WORKSPACE_KEY = "lda_active_workspace_id";
 
 export class ApiError extends Error {
   status: number;
@@ -23,6 +25,24 @@ export function setTokens(access: string, refresh: string): void {
 export function clearTokens(): void {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);
+}
+
+export function getActiveOrgId(): string | null {
+  return localStorage.getItem(ORG_KEY);
+}
+
+export function setActiveOrgId(id: string | null): void {
+  if (id) localStorage.setItem(ORG_KEY, id);
+  else localStorage.removeItem(ORG_KEY);
+}
+
+export function getActiveWorkspaceId(): string | null {
+  return localStorage.getItem(WORKSPACE_KEY);
+}
+
+export function setActiveWorkspaceId(id: string | null): void {
+  if (id) localStorage.setItem(WORKSPACE_KEY, id);
+  else localStorage.removeItem(WORKSPACE_KEY);
 }
 
 function detailOf(body: unknown, fallback: string): string {
@@ -68,6 +88,12 @@ export async function request<T>(path: string, options: RequestInit = {}, retry 
     ...(options.headers as Record<string, string> | undefined),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  
+  const orgId = getActiveOrgId();
+  if (orgId) headers["X-Organization-Id"] = orgId;
+  const wsId = getActiveWorkspaceId();
+  if (wsId) headers["X-Workspace-Id"] = wsId;
+
   if (options.body && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
@@ -97,6 +123,11 @@ export function uploadDocument(file: File, onProgress?: (pct: number) => void): 
     xhr.open("POST", `${BASE}/documents`);
     const token = getAccessToken();
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    const orgId = getActiveOrgId();
+    if (orgId) xhr.setRequestHeader("X-Organization-Id", orgId);
+    const wsId = getActiveWorkspaceId();
+    if (wsId) xhr.setRequestHeader("X-Workspace-Id", wsId);
+
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     });
@@ -125,30 +156,47 @@ export function uploadDocument(file: File, onProgress?: (pct: number) => void): 
 /** POST an SSE endpoint and yield parsed `data:` payloads. */
 export async function* streamSSE<T>(path: string, body: unknown): AsyncGenerator<T> {
   const token = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const orgId = getActiveOrgId();
+  if (orgId) headers["X-Organization-Id"] = orgId;
+  const wsId = getActiveWorkspaceId();
+  if (wsId) headers["X-Workspace-Id"] = wsId;
+
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers,
     body: JSON.stringify(body),
   });
-  if (!res.ok || !res.body) {
+
+  if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
     throw new ApiError(detailOf(errBody, res.statusText), res.status);
   }
-  const reader = res.body.getReader();
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new ApiError("No response body", 0);
+
   const decoder = new TextDecoder();
   let buffer = "";
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-    for (const part of parts) {
-      const line = part.split("\n").find((l) => l.startsWith("data:"));
-      if (line) yield JSON.parse(line.slice(5).trim()) as T;
+    const lines = buffer.split("\n\n");
+    buffer = lines.pop() ?? "";
+    for (const chunk of lines) {
+      const match = chunk.match(/^data:\s*(.*)$/m);
+      if (match) {
+        try {
+          yield JSON.parse(match[1]) as T;
+        } catch {
+          /* skip malformed chunk */
+        }
+      }
     }
   }
 }
