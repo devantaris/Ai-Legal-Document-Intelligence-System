@@ -23,9 +23,21 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+psycopg://legal:legal@localhost:5433/legal_ai"
 
+    # Distributed Task Queue & Cache (Redis)
+    REDIS_URL: str = "redis://localhost:6379/0"
+    ASYNC_WORKER_ENABLED: bool = False
+
     # File storage
+    STORAGE_BACKEND: str = "local"  # local | s3
     STORAGE_DIR: str = "./storage"
     MAX_UPLOAD_MB: int = 50
+
+    # S3 Object Storage Configuration
+    S3_ENDPOINT_URL: str | None = None
+    S3_BUCKET_NAME: str = "legaliq-contracts"
+    S3_ACCESS_KEY: str | None = None
+    S3_SECRET_KEY: str | None = None
+    S3_REGION: str = "us-east-1"
 
     # LLM provider: zai | ollama
     LLM_PROVIDER: str = "zai"

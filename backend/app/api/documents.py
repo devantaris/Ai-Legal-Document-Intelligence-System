@@ -1,4 +1,6 @@
+import json
 import shutil
+import time
 import uuid
 from pathlib import Path
 
@@ -8,21 +10,30 @@ from fastapi import (
     Depends,
     File,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user, owned_document
-from app.models import Chunk, Clause, Document, User
+from app.core.deps import (
+    get_current_member,
+    get_current_org,
+    get_current_user,
+    get_current_workspace,
+    owned_document,
+)
+from app.models import Chunk, Clause, Document, OrgRole, Organization, OrganizationMember, User, Workspace
 from app.schemas import ChunkLite, DocumentContentOut, DocumentOut
 from app.services.docx_export import generate_redline_docx
 from app.services.extraction import is_supported
 from app.services.ingestion import run_ingestion
+from app.services.storage import get_storage
+from app.workers.queue import enqueue_ingestion_task, get_task_progress
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -36,6 +47,8 @@ def _doc_out(db: Session, doc: Document) -> DocumentOut:
     )
     return DocumentOut(
         id=doc.id,
+        org_id=doc.org_id,
+        workspace_id=doc.workspace_id,
         filename=doc.filename,
         mime=doc.mime,
         status=doc.status,
@@ -55,8 +68,17 @@ def upload_document(
     background: BackgroundTasks,
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
+    org: Organization = Depends(get_current_org),
+    workspace: Workspace = Depends(get_current_workspace),
+    member: OrganizationMember = Depends(get_current_member),
     db: Session = Depends(get_db),
 ) -> DocumentOut:
+    if member.role == OrgRole.VIEWER.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Viewers cannot upload documents",
+        )
+
     if not file.filename or not is_supported(file.filename):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
@@ -72,58 +94,127 @@ def upload_document(
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File is empty")
 
+    safe_filename = Path(file.filename).name
+    mime_type = file.content_type or "application/octet-stream"
+
     doc = Document(
         user_id=user.id,
-        filename=Path(file.filename).name,
+        org_id=org.id,
+        workspace_id=workspace.id,
+        filename=safe_filename,
         file_path="",
-        mime=file.content_type or "application/octet-stream",
+        mime=mime_type,
         size_bytes=len(data),
         status="uploaded",
     )
     db.add(doc)
     db.flush()
 
-    target_dir = settings.storage_path / str(user.id) / str(doc.id)
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / Path(file.filename).name
-    target.write_bytes(data)
-    doc.file_path = str(target)
+    # Save via unified StorageService (Local or S3)
+    storage = get_storage()
+    rel_path = f"{user.id}/{doc.id}/{safe_filename}"
+    stored_path = storage.save(rel_path, data, mime=mime_type)
+    doc.file_path = stored_path
     db.commit()
     db.refresh(doc)
 
-    background.add_task(run_ingestion, doc.id)
+    # Sovereign Worker Queue dispatch: Redis worker or fallback threadpool
+    if getattr(settings, "ASYNC_WORKER_ENABLED", False):
+        enqueued = enqueue_ingestion_task(doc.id)
+        if not enqueued:
+            background.add_task(run_ingestion, doc.id)
+    else:
+        background.add_task(run_ingestion, doc.id)
+
     return _doc_out(db, doc)
 
 
 @router.get("", response_model=list[DocumentOut])
 def list_documents(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    workspace_id: uuid.UUID | None = Query(None),
+    user: User = Depends(get_current_user),
+    org: Organization = Depends(get_current_org),
+    db: Session = Depends(get_db),
 ) -> list[DocumentOut]:
-    docs = (
-        db.query(Document)
-        .filter(Document.user_id == user.id)
-        .order_by(Document.created_at.desc())
-        .all()
+    """List documents for the active organization, optionally filtered by workspace."""
+    query = db.query(Document).filter(
+        or_(
+            Document.org_id == org.id,
+            Document.user_id == user.id,
+        )
     )
+    if workspace_id:
+        query = query.filter(Document.workspace_id == workspace_id)
+
+    docs = query.order_by(Document.created_at.desc()).all()
     return [_doc_out(db, d) for d in docs]
 
 
 @router.get("/{doc_id}", response_model=DocumentOut)
 def get_document(
+    doc: Document = Depends(owned_document),
+    db: Session = Depends(get_db),
+) -> DocumentOut:
+    return _doc_out(db, doc)
+
+
+@router.get("/{doc_id}/progress")
+def get_progress(
+    doc: Document = Depends(owned_document),
+):
+    """Retrieve real-time processing stage and percentage from worker pipeline."""
+    prog = get_task_progress(doc.id)
+    if prog:
+        return prog
+    return {
+        "document_id": str(doc.id),
+        "status": doc.status,
+        "step": doc.error if doc.status == "failed" else ("Ready" if doc.status == "ready" else "Processing"),
+        "progress_pct": 100 if doc.status == "ready" else (0 if doc.status == "failed" else 30),
+    }
+
+
+@router.get("/{doc_id}/progress-stream")
+def stream_progress(
     doc_id: uuid.UUID,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> DocumentOut:
-    return _doc_out(db, owned_document(doc_id, user, db))
+):
+    """SSE stream yielding real-time ingestion stage updates."""
+    doc = owned_document(doc_id, user, db)
+
+    def event_generator():
+        last_pct = -1
+        while True:
+            prog = get_task_progress(doc.id)
+            if not prog:
+                db.refresh(doc)
+                prog = {
+                    "document_id": str(doc.id),
+                    "status": doc.status,
+                    "step": "Processing in sovereign worker",
+                    "progress_pct": 100 if doc.status == "ready" else (0 if doc.status == "failed" else 50),
+                }
+            if prog.get("progress_pct") != last_pct:
+                last_pct = prog.get("progress_pct", 0)
+                yield f"data: {json.dumps(prog)}\n\n"
+
+            if prog.get("status") in ("ready", "failed"):
+                break
+            time.sleep(0.8)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/{doc_id}/content", response_model=DocumentContentOut)
 def get_document_content(
-    doc_id: uuid.UUID,
-    user: User = Depends(get_current_user),
+    doc: Document = Depends(owned_document),
     db: Session = Depends(get_db),
 ) -> DocumentContentOut:
-    doc = owned_document(doc_id, user, db)
     chunks = (
         db.query(Chunk)
         .filter(Chunk.document_id == doc.id)
@@ -140,11 +231,9 @@ def get_document_content(
 
 @router.get("/{doc_id}/export-redline-docx")
 def export_redline_docx(
-    doc_id: uuid.UUID,
-    user: User = Depends(get_current_user),
+    doc: Document = Depends(owned_document),
     db: Session = Depends(get_db),
 ):
-    doc = owned_document(doc_id, user, db)
     buffer = generate_redline_docx(db, doc)
     safe_name = Path(doc.filename).stem
     filename = f"{safe_name}_LegalIQ_Redline.docx"
@@ -157,14 +246,22 @@ def export_redline_docx(
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(
-    doc_id: uuid.UUID,
+    doc: Document = Depends(owned_document),
+    member: OrganizationMember = Depends(get_current_member),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> None:
-    doc = owned_document(doc_id, user, db)
-    target_dir = (settings.storage_path / str(user.id) / str(doc.id)).resolve()
-    storage_root = settings.storage_path.resolve()
-    if target_dir.is_relative_to(storage_root) and target_dir.is_dir():
-        shutil.rmtree(target_dir, ignore_errors=True)
+    if member.role == OrgRole.VIEWER.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Viewers cannot delete documents",
+        )
+
+    storage = get_storage()
+    try:
+        storage.delete(doc.file_path)
+    except Exception:
+        pass
+
     db.delete(doc)
     db.commit()
