@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -8,6 +8,9 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.organization import Organization, Workspace
 
 
 class Document(Base):
@@ -18,6 +21,12 @@ class Document(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    workspace_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="SET NULL"), nullable=True, index=True
     )
     filename: Mapped[str] = mapped_column(String(512))
     file_path: Mapped[str] = mapped_column(Text)
@@ -36,6 +45,8 @@ class Document(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    organization: Mapped["Organization | None"] = relationship("Organization", back_populates="documents")
+    workspace: Mapped["Workspace | None"] = relationship("Workspace", back_populates="documents")
     chunks = relationship(
         "Chunk", back_populates="document", cascade="all, delete-orphan"
     )
