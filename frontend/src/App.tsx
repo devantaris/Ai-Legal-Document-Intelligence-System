@@ -12,6 +12,8 @@ import { PortfolioPage } from "./pages/PortfolioPage";
 import { TeamPage } from "./pages/TeamPage";
 import { WorkspacesPage } from "./pages/WorkspacesPage";
 import { PlanPage } from "./pages/PlanPage";
+import { PlaybooksPage } from "./pages/PlaybooksPage";
+import { AuditLogsPage } from "./pages/AuditLogsPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuth();
@@ -90,6 +92,22 @@ export default function App() {
         element={
           <RequireAuth>
             <PortfolioPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/playbooks"
+        element={
+          <RequireAuth>
+            <PlaybooksPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/audit-logs"
+        element={
+          <RequireAuth>
+            <AuditLogsPage />
           </RequireAuth>
         }
       />

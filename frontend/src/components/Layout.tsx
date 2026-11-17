@@ -17,6 +17,8 @@ import {
   Building2,
   ChevronDown,
   Plus,
+  BookOpen,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../stores/auth";
 import { useTenant } from "../stores/tenant";
@@ -27,9 +29,11 @@ import type { LlmInfo } from "../lib/types";
 const navItems = [
   { to: "/", label: "Documents", icon: FileText },
   { to: "/portfolio", label: "Contract Vault", icon: Briefcase },
+  { to: "/playbooks", label: "Playbooks", icon: BookOpen },
   { to: "/compare", label: "Compare", icon: GitCompare },
   { to: "/workspaces", label: "Workspaces", icon: FolderKanban },
   { to: "/team", label: "Team & RBAC", icon: Users },
+  { to: "/audit-logs", label: "Audit Trail", icon: ShieldCheck },
   { to: "/plan", label: "Plan & Usage", icon: CreditCard },
   { to: "/landing", label: "Overview & 3D", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },

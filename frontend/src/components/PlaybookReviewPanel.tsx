@@ -9,9 +9,21 @@ import {
   SlidersHorizontal,
   ChevronDown,
   ChevronUp,
+  BookOpen,
+  CheckCircle2,
+  Flag,
+  XCircle,
+  MessageSquare,
 } from "lucide-react";
 import { request } from "../lib/api";
-import type { DocumentOut, PlaybookFinding, PlaybookReviewOut, RiskLevel } from "../lib/types";
+import type {
+  ClauseDecision,
+  DocumentOut,
+  Playbook,
+  PlaybookFinding,
+  PlaybookReviewOut,
+  RiskLevel,
+} from "../lib/types";
 
 interface Props {
   doc: DocumentOut;
@@ -20,6 +32,8 @@ interface Props {
 
 export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
   const [review, setReview] = useState<PlaybookReviewOut | null>(null);
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [selectedPlaybookId, setSelectedPlaybookId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | RiskLevel>("ALL");
@@ -28,15 +42,44 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
   >({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
+  const [decisionNotes, setDecisionNotes] = useState<Record<string, string>>({});
+  const [savingDecision, setSavingDecision] = useState<Record<string, boolean>>({});
 
-  const loadReview = async (refresh = false) => {
+  // Fetch available playbooks for the active organization
+  useEffect(() => {
+    void (async () => {
+      try {
+        const pbList = await request<Playbook[]>("/playbooks");
+        setPlaybooks(pbList);
+      } catch {
+        /* fallback to default */
+      }
+    })();
+  }, []);
+
+  const loadReview = async (refresh = false, pbId?: string) => {
     setLoading(true);
     setError(null);
     try {
+      const activePb = pbId !== undefined ? pbId : selectedPlaybookId;
+      const queryParts: string[] = [];
+      if (refresh) queryParts.push("refresh=true");
+      if (activePb) queryParts.push(`playbook_id=${activePb}`);
+      const qs = queryParts.length ? `?${queryParts.join("&")}` : "";
+
       const data = await request<PlaybookReviewOut>(
-        `/documents/${doc.id}/playbook-review${refresh ? "?refresh=true" : ""}`
+        `/documents/${doc.id}/playbook-review${qs}`
       );
       setReview(data);
+
+      // Pre-populate notes from decisions
+      const notesMap: Record<string, string> = {};
+      for (const f of data.findings) {
+        if (f.decision_notes) {
+          notesMap[f.clause_type] = f.decision_notes;
+        }
+      }
+      setDecisionNotes((prev) => ({ ...notesMap, ...prev }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load playbook audit");
     } finally {
@@ -48,6 +91,11 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
     void loadReview();
   }, [doc.id]);
 
+  const handlePlaybookChange = (pbId: string) => {
+    setSelectedPlaybookId(pbId);
+    void loadReview(false, pbId);
+  };
+
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -56,6 +104,41 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
 
   const toggleExpand = (id: string) => {
     setExpandedDetails((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleRecordDecision = async (
+    clauseType: string,
+    decision: "accepted" | "flagged" | "rejected" | "pending"
+  ) => {
+    setSavingDecision((prev) => ({ ...prev, [clauseType]: true }));
+    try {
+      const notes = decisionNotes[clauseType] || "";
+      await request<ClauseDecision>(`/playbooks/documents/${doc.id}/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          clause_type: clauseType,
+          decision,
+          notes: notes.trim() || undefined,
+        }),
+      });
+
+      // Update local state
+      setReview((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          findings: prev.findings.map((f) =>
+            f.clause_type === clauseType
+              ? { ...f, decision, decision_notes: notes.trim() || null }
+              : f
+          ),
+        };
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to record decision");
+    } finally {
+      setSavingDecision((prev) => ({ ...prev, [clauseType]: false }));
+    }
   };
 
   if (loading) {
@@ -125,6 +208,38 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
     }
   };
 
+  const getDecisionBadge = (decision?: string) => {
+    switch (decision) {
+      case "accepted":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+            <span>Risk Accepted</span>
+          </span>
+        );
+      case "flagged":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+            <Flag className="h-3 w-3 text-amber-600" />
+            <span>Escalated to Partner</span>
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-800">
+            <XCircle className="h-3 w-3 text-rose-600" />
+            <span>Remediation Required</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600">
+            Decision Pending
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Executive Scorecard */}
@@ -139,7 +254,7 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-neutral-900">Institutional Playbook Audit</h3>
+                <h3 className="text-sm font-semibold text-neutral-900">{review.playbook_name || "Playbook Audit"}</h3>
                 <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-700">
                   {review.overall_risk}
                 </span>
@@ -148,7 +263,26 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start md:self-auto">
+          {/* Playbook Standard Selector & Refresh */}
+          <div className="flex items-center gap-2.5 self-start md:self-auto">
+            {playbooks.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-neutral-400" />
+                <select
+                  value={selectedPlaybookId}
+                  onChange={(e) => handlePlaybookChange(e.target.value)}
+                  className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-neutral-700 focus:border-neutral-900 focus:outline-none"
+                >
+                  <option value="">Default Standard</option>
+                  {playbooks.map((pb) => (
+                    <option key={pb.id} value={pb.id}>
+                      {pb.name} {pb.is_default ? "(Default)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <button
               onClick={() => loadReview(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition"
@@ -209,7 +343,7 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
           </div>
 
           <div className="text-[11px] text-neutral-400">
-            Standard: Corporate Tech B2B Baseline (Delaware/NY Law, 12M Cap)
+            Standard: {review.playbook_name || "Institutional Commercial Standard"}
           </div>
         </div>
       </div>
@@ -225,6 +359,8 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
             const cardKey = finding.clause_id ?? `omitted-${idx}`;
             const activeTab = activeFallbackTab[cardKey] || "conservative";
             const isExpanded = expandedDetails[cardKey] ?? true;
+            const currentDecision = finding.decision || "pending";
+            const isSaving = savingDecision[finding.clause_type];
 
             return (
               <div
@@ -239,6 +375,7 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
                     {finding.page_start && (
                       <span className="text-[10px] text-neutral-400 font-mono">Page {finding.page_start}</span>
                     )}
+                    {getDecisionBadge(finding.decision)}
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -369,6 +506,88 @@ export function PlaybookReviewPanel({ doc, onSelectClause }: Props) {
                             </>
                           )}
                         </button>
+                      </div>
+                    </div>
+
+                    {/* Attorney Review Decision Bar */}
+                    <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-neutral-900">
+                            Attorney Negotiation Decision
+                          </span>
+                          <span className="text-[10px] text-neutral-400">
+                            Record risk acceptance or remediation posture
+                          </span>
+                        </div>
+
+                        {/* Decision Buttons */}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => handleRecordDecision(finding.clause_type, "accepted")}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                              currentDecision === "accepted"
+                                ? "bg-emerald-700 text-white shadow-sm"
+                                : "border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                            }`}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>Accept Risk</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => handleRecordDecision(finding.clause_type, "flagged")}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                              currentDecision === "flagged"
+                                ? "bg-amber-700 text-white shadow-sm"
+                                : "border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            }`}
+                          >
+                            <Flag className="h-3 w-3" />
+                            <span>Flag for Partner</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => handleRecordDecision(finding.clause_type, "rejected")}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                              currentDecision === "rejected"
+                                ? "bg-rose-700 text-white shadow-sm"
+                                : "border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                            }`}
+                          >
+                            <XCircle className="h-3 w-3" />
+                            <span>Reject & Apply Fallback</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Rationale / Notes input */}
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                        <input
+                          type="text"
+                          value={decisionNotes[finding.clause_type] ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDecisionNotes((prev) => ({ ...prev, [finding.clause_type]: val }));
+                          }}
+                          onBlur={() => {
+                            if (currentDecision !== "pending") {
+                              void handleRecordDecision(
+                                finding.clause_type,
+                                currentDecision as "accepted" | "flagged" | "rejected"
+                              );
+                            }
+                          }}
+                          placeholder="Attorney rationale (e.g. Approved by CFO due to critical enterprise timeline)..."
+                          className="flex-1 rounded-md border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-neutral-900 focus:outline-none"
+                        />
                       </div>
                     </div>
                   </div>

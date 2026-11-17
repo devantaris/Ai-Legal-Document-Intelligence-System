@@ -132,10 +132,14 @@ export interface PlaybookFinding {
   deviation_reason: string;
   action_required: string;
   fallbacks: FallbackDrafts;
+  decision?: "pending" | "accepted" | "flagged" | "rejected";
+  decision_notes?: string | null;
 }
 
 export interface PlaybookReviewOut {
   document_id: string;
+  playbook_id?: string | null;
+  playbook_name?: string;
   compliance_score: number;
   overall_risk: "Low Risk" | "Moderate Risk" | "High Risk" | "Severe Exposure";
   summary: string;
@@ -144,6 +148,69 @@ export interface PlaybookReviewOut {
   green_count: number;
   total_evaluated: number;
   findings: PlaybookFinding[];
+}
+
+export interface PlaybookRule {
+  clause_type: string;
+  name: string;
+  preferred_position: string;
+  unacceptable_triggers: string[];
+  guidance: string;
+}
+
+export interface Playbook {
+  id: string;
+  org_id: string;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  rules: Record<string, PlaybookRule>;
+  rule_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlaybookCreateIn {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+  rules?: Record<string, PlaybookRule>;
+}
+
+export interface PlaybookUpdateIn {
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+  rules?: Record<string, PlaybookRule>;
+}
+
+export interface ClauseDecision {
+  id: string;
+  document_id: string;
+  clause_type: string;
+  decision: "pending" | "accepted" | "flagged" | "rejected";
+  notes: string | null;
+  decided_by_user_id: string | null;
+  updated_at: string;
+}
+
+export interface ClauseDecisionIn {
+  clause_type: string;
+  decision: "pending" | "accepted" | "flagged" | "rejected";
+  notes?: string;
+}
+
+export interface AuditLog {
+  id: string;
+  org_id: string;
+  user_id: string | null;
+  actor_email: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, any>;
+  ip_address: string | null;
+  created_at: string;
 }
 
 export interface ChunkLite {
