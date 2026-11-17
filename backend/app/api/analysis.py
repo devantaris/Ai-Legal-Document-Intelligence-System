@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, owned_document
-from app.models import Document, User
+from app.core.deps import get_current_org, get_current_user, owned_document
+from app.models import ClauseDecision, Document, Organization, Playbook, User
 from app.schemas import (
     ClauseOut,
     KeyTermsOut,
@@ -70,12 +70,59 @@ def get_clauses(
 @router.get("/documents/{doc_id}/playbook-review", response_model=PlaybookReviewOut)
 def get_playbook_review(
     doc_id: uuid.UUID,
+    playbook_id: uuid.UUID | None = Query(None),
     refresh: bool = Query(default=False),
     user: User = Depends(get_current_user),
+    org: Organization = Depends(get_current_org),
     db: Session = Depends(get_db),
 ) -> PlaybookReviewOut:
     doc = _ready_document(doc_id, user, db)
-    return review_document_playbook(db, doc, refresh=refresh)
+
+    rules: dict[str, PlaybookRule] | None = None
+    pb_name = "Institutional Commercial Standard"
+    resolved_pb_id: uuid.UUID | None = None
+
+    if playbook_id:
+        pb = db.get(Playbook, playbook_id)
+        if pb and pb.org_id == org.id:
+            resolved_pb_id = pb.id
+            pb_name = pb.name
+            rules = {
+                k: PlaybookRule.model_validate(v)
+                for k, v in pb.rules.items()
+                if isinstance(v, dict)
+            }
+    elif doc.org_id:
+        default_pb = (
+            db.query(Playbook)
+            .filter(Playbook.org_id == doc.org_id, Playbook.is_default == True)
+            .first()
+        )
+        if default_pb and default_pb.rules:
+            resolved_pb_id = default_pb.id
+            pb_name = default_pb.name
+            rules = {
+                k: PlaybookRule.model_validate(v)
+                for k, v in default_pb.rules.items()
+                if isinstance(v, dict)
+            }
+
+    review = review_document_playbook(db, doc, rules=rules, refresh=refresh)
+    review.playbook_id = resolved_pb_id
+    review.playbook_name = pb_name
+
+    # Attach recorded attorney review decisions
+    decisions = {
+        d.clause_type: d
+        for d in db.query(ClauseDecision).filter(ClauseDecision.document_id == doc.id).all()
+    }
+    for finding in review.findings:
+        if finding.clause_type in decisions:
+            d = decisions[finding.clause_type]
+            finding.decision = d.decision
+            finding.decision_notes = d.notes
+
+    return review
 
 
 @router.get("/documents/{doc_id}/defined-terms", response_model=DefinedTermsSummaryOut)

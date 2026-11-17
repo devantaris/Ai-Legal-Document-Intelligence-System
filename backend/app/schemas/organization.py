@@ -74,3 +74,18 @@ class OrgUsageOut(BaseModel):
     storage_bytes: int
     sovereign_inference: bool
     features: list[str]
+
+
+class AuditLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    actor_email: str | None = None
+    action: str
+    resource_type: str
+    resource_id: str | None = None
+    details: dict[str, Any] = Field(default_factory=dict)
+    ip_address: str | None = None
+    created_at: datetime

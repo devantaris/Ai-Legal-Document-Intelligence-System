@@ -29,6 +29,7 @@ from app.core.deps import (
 )
 from app.models import Chunk, Clause, Document, OrgRole, Organization, OrganizationMember, User, Workspace
 from app.schemas import ChunkLite, DocumentContentOut, DocumentOut
+from app.services.audit import record_audit_event
 from app.services.docx_export import generate_redline_docx
 from app.services.extraction import is_supported
 from app.services.ingestion import run_ingestion
@@ -125,6 +126,16 @@ def upload_document(
             background.add_task(run_ingestion, doc.id)
     else:
         background.add_task(run_ingestion, doc.id)
+
+    record_audit_event(
+        db,
+        org.id,
+        user.id,
+        "document.upload",
+        "document",
+        str(doc.id),
+        {"filename": doc.filename, "size_bytes": doc.size_bytes},
+    )
 
     return _doc_out(db, doc)
 
@@ -232,11 +243,22 @@ def get_document_content(
 @router.get("/{doc_id}/export-redline-docx")
 def export_redline_docx(
     doc: Document = Depends(owned_document),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     buffer = generate_redline_docx(db, doc)
     safe_name = Path(doc.filename).stem
     filename = f"{safe_name}_LegalIQ_Redline.docx"
+    if doc.org_id:
+        record_audit_event(
+            db,
+            doc.org_id,
+            user.id,
+            "document.export_redline",
+            "document",
+            str(doc.id),
+            {"filename": doc.filename},
+        )
     return StreamingResponse(
         buffer,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -262,6 +284,17 @@ def delete_document(
         storage.delete(doc.file_path)
     except Exception:
         pass
+
+    if doc.org_id:
+        record_audit_event(
+            db,
+            doc.org_id,
+            user.id,
+            "document.delete",
+            "document",
+            str(doc.id),
+            {"filename": doc.filename},
+        )
 
     db.delete(doc)
     db.commit()

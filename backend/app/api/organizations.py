@@ -1,14 +1,16 @@
+import json
 import re
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_org, get_current_user, require_role
 from app.models import (
+    AuditLog,
     Document,
     MemberStatus,
     OrgRole,
@@ -18,6 +20,7 @@ from app.models import (
     Workspace,
 )
 from app.schemas.organization import (
+    AuditLogOut,
     MemberInviteIn,
     MemberRoleUpdateIn,
     OrgUsageOut,
@@ -561,3 +564,100 @@ def get_usage(
             "Cross-Repository Multi-Contract Portfolio Due Diligence Grid",
         ],
     )
+
+
+# ==================== Enterprise Audit Trails & Compliance ====================
+
+
+@router.get("/{org_id}/audit-logs", response_model=list[AuditLogOut])
+def list_audit_logs(
+    org_id: uuid.UUID,
+    limit: int = Query(default=100, ge=1, le=500),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[AuditLogOut]:
+    _check_membership(db, org_id, user.id)
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.org_id == org_id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    out: list[AuditLogOut] = []
+    for l in logs:
+        actor_email = None
+        if l.user_id:
+            u = db.get(User, l.user_id)
+            if u:
+                actor_email = u.email
+        out.append(
+            AuditLogOut(
+                id=l.id,
+                org_id=l.org_id,
+                user_id=l.user_id,
+                actor_email=actor_email,
+                action=l.action,
+                resource_type=l.resource_type,
+                resource_id=l.resource_id,
+                details=l.details or {},
+                ip_address=l.ip_address,
+                created_at=l.created_at,
+            )
+        )
+    return out
+
+
+@router.get("/{org_id}/audit-logs/export-csv")
+def export_audit_logs_csv(
+    org_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    import csv
+    import io
+    from fastapi.responses import Response
+
+    member = _check_membership(db, org_id, user.id)
+    if member.role not in [OrgRole.OWNER.value, OrgRole.ADMIN.value]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Owners and Admins can export compliance audit logs",
+        )
+
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.org_id == org_id)
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Timestamp (UTC)", "Actor Email", "Action", "Resource Type", "Resource ID", "IP Address", "Metadata"])
+
+    for l in logs:
+        actor_email = ""
+        if l.user_id:
+            u = db.get(User, l.user_id)
+            if u:
+                actor_email = u.email
+        writer.writerow([
+            l.created_at.isoformat(),
+            actor_email,
+            l.action,
+            l.resource_type,
+            l.resource_id or "",
+            l.ip_address or "",
+            json.dumps(l.details or {}),
+        ])
+
+    csv_data = output.getvalue()
+    filename = f"LegalIQ_Audit_Log_{org_id}.csv"
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+

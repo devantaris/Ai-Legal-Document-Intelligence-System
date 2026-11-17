@@ -2,7 +2,17 @@ from app.schemas.auth import LoginIn, RefreshIn, RegisterIn, TokenOut, UserOut
 from app.schemas.chat import AskIn, MessageOut
 from app.schemas.compare import CompareIn
 from app.schemas.document import ChunkLite, ClauseOut, DocumentContentOut, DocumentOut, KeyTermsOut, SummaryOut
-from app.schemas.playbook import FallbackDrafts, PlaybookFinding, PlaybookReviewOut, PlaybookRule
+from app.schemas.playbook import (
+    ClauseDecisionIn,
+    ClauseDecisionOut,
+    FallbackDrafts,
+    PlaybookCreateIn,
+    PlaybookFinding,
+    PlaybookOut,
+    PlaybookReviewOut,
+    PlaybookRule,
+    PlaybookUpdateIn,
+)
 from app.schemas.organization import (
     MemberInviteIn,
     MemberRoleUpdateIn,
@@ -34,6 +44,11 @@ __all__ = [
     "PlaybookFinding",
     "PlaybookReviewOut",
     "PlaybookRule",
+    "PlaybookCreateIn",
+    "PlaybookUpdateIn",
+    "PlaybookOut",
+    "ClauseDecisionIn",
+    "ClauseDecisionOut",
     "OrganizationCreateIn",
     "OrganizationUpdateIn",
     "OrganizationOut",
