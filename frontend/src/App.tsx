@@ -9,6 +9,9 @@ import { ComparePage } from "./pages/ComparePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { LandingPage } from "./pages/LandingPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
+import { TeamPage } from "./pages/TeamPage";
+import { WorkspacesPage } from "./pages/WorkspacesPage";
+import { PlanPage } from "./pages/PlanPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuth();
@@ -95,6 +98,30 @@ export default function App() {
         element={
           <RequireAuth>
             <ComparePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/workspaces"
+        element={
+          <RequireAuth>
+            <WorkspacesPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/team"
+        element={
+          <RequireAuth>
+            <TeamPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/plan"
+        element={
+          <RequireAuth>
+            <PlanPage />
           </RequireAuth>
         }
       />
