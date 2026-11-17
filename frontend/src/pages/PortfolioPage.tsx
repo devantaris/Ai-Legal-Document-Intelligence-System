@@ -12,9 +12,11 @@ import {
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { request } from "../lib/api";
+import { useTenant } from "../stores/tenant";
 import type { Citation, PortfolioAnswerOut, PortfolioItem, PortfolioMatrixOut } from "../lib/types";
 
 export function PortfolioPage() {
+  const { currentOrg, currentWorkspace } = useTenant();
   const [matrix, setMatrix] = useState<PortfolioMatrixOut | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,19 +25,21 @@ export function PortfolioPage() {
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryResult, setQueryResult] = useState<PortfolioAnswerOut | null>(null);
 
+  const loadMatrix = async () => {
+    setLoading(true);
+    try {
+      const data = await request<PortfolioMatrixOut>("/portfolio/matrix");
+      setMatrix(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load contract portfolio");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    void (async () => {
-      setLoading(true);
-      try {
-        const data = await request<PortfolioMatrixOut>("/portfolio/matrix");
-        setMatrix(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load contract portfolio");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    void loadMatrix();
+  }, [currentOrg?.id, currentWorkspace?.id]);
 
   const handlePortfolioQuery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -112,7 +116,15 @@ export function PortfolioPage() {
         <div>
           <div className="flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-neutral-500" />
-            <h1 className="text-lg font-semibold text-neutral-900">Contract Vault & Repository Due Diligence</h1>
+            <h1 className="text-lg font-semibold text-neutral-900">Contract Vault & Due Diligence Matrix</h1>
+            <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-700">
+              {currentOrg?.name ?? "Organization"}
+            </span>
+            {currentWorkspace && (
+              <span className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-mono text-neutral-600">
+                📁 {currentWorkspace.name}
+              </span>
+            )}
           </div>
           <p className="mt-1 text-xs text-neutral-500">
             Cross-contract intelligence, portfolio queries, and automated tabular metadata extraction

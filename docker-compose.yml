@@ -29,6 +29,60 @@ services:
       timeout: 3s
       retries: 20
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: legal_ai_api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://legal:legal@db:5432/legal_ai
+      REDIS_URL: redis://redis:6379/0
+      ASYNC_WORKER_ENABLED: "true"
+      SOVEREIGN_INFERENCE_MODE: "true"
+      SECRET_KEY: ${SECRET_KEY:-sovereign-legal-super-secret-key-32chars}
+    ports:
+      - "8000:8000"
+    volumes:
+      - docstorage:/app/storage
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: legal_ai_worker
+    command: ["python", "-m", "app.workers.worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+psycopg://legal:legal@db:5432/legal_ai
+      REDIS_URL: redis://redis:6379/0
+      ASYNC_WORKER_ENABLED: "true"
+      SOVEREIGN_INFERENCE_MODE: "true"
+      SECRET_KEY: ${SECRET_KEY:-sovereign-legal-super-secret-key-32chars}
+    volumes:
+      - docstorage:/app/storage
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: legal_ai_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
 volumes:
   pgdata:
   redisdata:
+  docstorage:

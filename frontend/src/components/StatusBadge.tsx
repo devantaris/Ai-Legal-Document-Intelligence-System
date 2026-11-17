@@ -42,7 +42,15 @@ const STYLES: Record<
   },
 };
 
-export function StatusBadge({ status }: { status: DocStatus }) {
+export function StatusBadge({
+  status,
+  progressPct,
+  stepText,
+}: {
+  status: DocStatus;
+  progressPct?: number;
+  stepText?: string;
+}) {
   const s = STYLES[status] ?? STYLES.uploaded;
   const isBusy = status === "parsing" || status === "embedding" || status === "uploaded";
   const Icon = s.icon;
@@ -52,7 +60,11 @@ export function StatusBadge({ status }: { status: DocStatus }) {
       className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium ${s.bg} ${s.text} ${s.border}`}
     >
       <Icon className={`h-3 w-3 ${isBusy && status !== "uploaded" ? "animate-spin" : ""}`} />
-      <span>{s.label}</span>
+      <span>
+        {isBusy && progressPct !== undefined && progressPct > 0
+          ? `${stepText || s.label} (${progressPct}%)`
+          : s.label}
+      </span>
     </span>
   );
 }

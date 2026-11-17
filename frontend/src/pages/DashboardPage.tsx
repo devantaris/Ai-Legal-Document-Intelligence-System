@@ -47,13 +47,15 @@ export function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const prevStatuses = useRef<Map<string, string>>(new Map());
+  const [docProgress, setDocProgress] = useState<Record<string, { pct: number; step: string }>>({});
   const navigate = useNavigate();
 
   const isViewer = currentOrg?.role === "viewer";
 
   const load = useCallback(async () => {
     try {
-      const fresh = await request<DocumentOut[]>("/documents");
+      const qs = currentWorkspace?.id ? `?workspace_id=${currentWorkspace.id}` : "";
+      const fresh = await request<DocumentOut[]>(`/documents${qs}`);
       // celebrate documents that just finished processing
       for (const d of fresh) {
         const before = prevStatuses.current.get(d.id);
@@ -62,12 +64,28 @@ export function DashboardPage() {
       prevStatuses.current = new Map(fresh.map((d) => [d.id, d.status]));
       setDocs(fresh);
       setError(null);
+
+      // Fetch progress for any processing documents
+      const processingDocs = fresh.filter((d) => PROCESSING.has(d.status));
+      if (processingDocs.length > 0) {
+        for (const pd of processingDocs) {
+          try {
+            const prog = await request<{ progress_pct: number; step: string }>(`/documents/${pd.id}/progress`);
+            setDocProgress((prev) => ({
+              ...prev,
+              [pd.id]: { pct: prog.progress_pct, step: prog.step },
+            }));
+          } catch {
+            /* ignore individual progress fetch */
+          }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load documents");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
     void load();
@@ -282,7 +300,11 @@ export function DashboardPage() {
                       </div>
                     </td>
                     <td className="py-3 px-3">
-                      <StatusBadge status={doc.status} />
+                      <StatusBadge
+                        status={doc.status}
+                        progressPct={docProgress[doc.id]?.pct}
+                        stepText={docProgress[doc.id]?.step}
+                      />
                     </td>
                     <td className="py-3 px-3 font-mono text-neutral-500">
                       {doc.page_count ?? "—"}
