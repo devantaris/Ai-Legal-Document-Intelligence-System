@@ -1,32 +1,66 @@
-# LegalIQ — Enterprise AI Legal Document Intelligence System
+# LegalIQ — Sovereign AI Legal Document Intelligence SaaS
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![React 19](https://img.shields.io/badge/react-19-blue.svg)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_pgvector-336791.svg)](https://github.com/pgvector/pgvector)
+[![Redis](https://img.shields.io/badge/Redis-7_Alpine-red.svg)](https://redis.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An enterprise-grade, sovereign legal intelligence workstation for corporate legal teams, in-house counsel, and transactional attorneys. **Local-first by default** via Ollama—ensuring confidential agreements never leave your private infrastructure—with seamless cloud provider failover.
+An enterprise-grade, **Sovereign Multi-Tenant B2B SaaS** for corporate legal departments, in-house general counsel, transactional law firms, and legal operations teams. **100% Data Sovereignty by default** via local Ollama / vLLM execution—ensuring privileged attorney-client agreements and non-disclosure obligations remain strictly contained within your private network boundary.
 
-Built with a disciplined, high-density light-mode interface compliant with corporate legal design standards ([TasteSkill](https://www.tasteskill.dev/docs#installation)), featuring an interactive 3D WebGL architectural hero scene, in-situ split-screen reading canvas, and deterministic citation guards.
+Built with a disciplined, high-density light-mode interface compliant with corporate legal design standards ([TasteSkill](https://www.tasteskill.dev/docs#installation)), featuring an interactive 3D WebGL architectural hero scene, in-situ split-screen reading canvas, custom playbook builder, and SOC2/ISO 27001-ready immutable audit logging.
 
 ---
 
-## Capabilities & Feature Matrix
+## Enterprise SaaS Architecture & Capabilities
 
-| Core Pillar | What You Get |
+| Core SaaS Pillar | Enterprise Capability |
 | :--- | :--- |
-| **🛡️ Institutional Playbook Compliance** | Automated compliance evaluation against 10 corporate standards (Liability, Indemnity, Governing Law, IP, etc.). Grades clauses into **Red (High Risk)**, **Amber (Deviation)**, or **Green (Compliant)** with a 0–100% compliance score. |
-| **⚡ 3-Tier Remediation Fallbacks** | Generates pre-approved fallback drafts for every flagged clause: **Conservative** (market standard), **Compromise** (balanced), and **Aggressive** (high leverage) with 1-click clipboard copy. |
+| **🏢 Multi-Tenant Organizations & Matters** | Complete tenant isolation with dedicated organizations, matter workspaces (e.g. Project Apollo M&A, Vendor Procurements), and instant workspace switcher. |
+| **👥 5-Tier Legal RBAC** | Fine-grained role permissions: `Owner`, `Admin`, `Legal Counsel`, `Reviewer`, and `Viewer` (read-only mode preventing uploads and deletions). |
+| **🛡️ Institutional Playbook Builder** | Visual policy builder allowing organizations to create customized negotiation playbooks, preferred positions, unacceptable trigger words, and review guidance. |
+| **⚖️ Attorney Negotiation Decisions** | Record per-clause attorney decisions (`Risk Accepted`, `Escalated to Partner`, `Remediation Required`) with internal rationale notes directly in the review canvas. |
+| **📜 Immutable Compliance Audit Trail** | Cryptographically signed, SOC 2 Type II / ISO 27001-ready activity log recording uploads, exports, deletions, member invites, and IP addresses with 1-click **CSV Compliance Export**. |
+| **⚡ Distributed Async Task Queue** | Redis-backed asynchronous worker pipeline offloading heavy PDF OCR, parsing, and vector embeddings with real-time **SSE Stage Tracking** (`20% -> 45% -> 70% -> 90% -> 100%`). |
+| **🔐 Sovereign Encrypted Storage** | Pluggable AES-256 local encrypted storage adapter and AWS S3 / MinIO adapter keeping raw contract binaries encrypted at rest. |
 | **📝 Native Word (.docx) Redlines** | 1-click export generating real Microsoft Word documents with **native Track Changes (`w:ins` / `w:del` XML tags)** and attorney review notes—ready to email directly to opposing counsel. |
-| **📖 Dual-Pane Document Canvas** | Split-screen legal reading environment. Clicking any citation `[1]` in chat or any finding in Playbook automatically scrolls to the exact paragraph and highlights the passage with a warm legal-amber glow. |
-| **🔍 Defined-Term Resolution Graph** | Automatically indexes capitalized defined terms. Terms receive dotted underlines; hovering displays an instant tooltip popover with the official contractual definition and global occurrence count. |
-| **📂 Contract Vault Due Diligence Grid** | Cross-repository intelligence table extracting structured metadata (Parties, Effective Date, Governing Law, Payment Terms, Liability Caps) across all contracts with 1-click **CSV Due Diligence Export**. |
+| **📖 Dual-Pane Document Canvas** | Split-screen legal reading environment. Clicking any citation `[1]` in chat or any finding in Playbook automatically scrolls to the exact paragraph with synchronized highlighting. |
+| **🔍 Defined-Term Resolution Graph** | Automatically indexes capitalized defined terms. Terms receive dotted underlines; hovering displays an instant tooltip popover with canonical definitions and occurrence counts. |
+| **📂 Contract Vault Due Diligence Grid** | Cross-repository intelligence table extracting structured metadata (Parties, Dates, Governing Law, Liability Caps) with 1-click **CSV Due Diligence Export**. |
 | **🌐 Cross-Repository Legal AI Query** | Multi-document RAG query engine allowing cross-examination across 50+ contracts simultaneously, contrasting conflicting provisions with multi-contract citations. |
-| **✅ Zero-Hallucination Entailment Guard** | Mathematical Natural Language Inference (NLI) claim verification. Evaluates generated answers sentence-by-sentence against cited text snippets, awarding an audited "100% Citation Grounded" certificate. |
-| **💬 Citation-Backed Q&A (RAG)** | Low-latency streaming chat grounded in contract text using Reciprocal Rank Fusion ($k=60$) combining dense vector embeddings (`bge-m3` / `nomic`) with PostgreSQL BM25 keyword matching. |
-| **📊 Hierarchical Map-Reduce Summary** | Analyzes 30+ page contracts without truncation via parallel map-reduce summarization detailing Parties, Purpose, Obligations, Liabilities, and Expirations. |
-| **⚖️ Version Comparison & Diff** | Clause-by-clause semantic diff aligning provisions across contract revisions (added, removed, modified, unchanged) with severity assessments. |
+| **✅ Zero-Hallucination Entailment Guard** | Mathematical Natural Language Inference (NLI) claim verification evaluating answers sentence-by-sentence, awarding audited "100% Citation Grounded" certificates. |
+| **💎 Sovereign Plan & Metering** | Internal resource metering (documents indexed, storage utilized, team seats) with "Coming Soon" tier displays for frictionless enterprise procurement. |
+
+---
+
+## Multi-Tenant System Architecture
+
+```
+Frontend SPA (React 19 + TypeScript + Vite + Tailwind CSS)
+├── Organization & Matter Workspace Switcher
+├── Visual Playbook Policy Builder (/playbooks)
+├── SOC 2 Compliance Audit Trail & CSV Export (/audit-logs)
+├── Team Roster & Role-Based Access Control (/team)
+├── Sovereign Plan & Metering Dashboard (/plan)
+├── Dual-Pane Contract Reader & Live SSE Progress Stream
+└── Global Command Palette (⌘K / Ctrl+K)
+       │
+       │ HTTP REST & SSE Streaming (Headers: X-Organization-Id, X-Workspace-Id)
+       ▼
+Reverse Proxy & Gateway (Nginx / FastAPI)
+├── Tenant Dependency Resolver (get_current_tenant, get_current_member)
+├── Strict RBAC Permission Guards (require_role)
+└── Real-Time Task Progress Publisher (/progress, /progress-stream)
+       │
+   ┌───┴───────────────────────────────┐
+   ▼                                   ▼
+Database Layer                  Distributed Worker Cluster
+├── PostgreSQL 16 + pgvector    ├── Redis Job Queue (legaliq:ingestion_queue)
+│   ├── Multi-Tenant Schemas    ├── Asynchronous Ingestion Daemon
+│   ├── HNSW Vector Index       ├── AES-256 Storage / AWS S3
+│   └── Immutable Audit Trail   └── Sovereign Local Inference (Ollama / vLLM)
+```
 
 ---
 
@@ -77,12 +111,24 @@ Database & Storage
 
 ## Quick Start (Windows / macOS / Linux)
 
-### Option A: Windows One-Click Demo
+### Option A: Complete Sovereign Docker Deployment (Recommended)
+Boot the entire enterprise multi-tenant stack (PostgreSQL + pgvector, Redis Queue, Ingestion Worker, FastAPI Gateway, and Nginx SPA Frontend) with a single command:
+```bash
+docker compose up -d --build
+```
+* **Frontend Application:** http://localhost:3000
+* **API Documentation:** http://localhost:8000/docs
+* **Database:** `localhost:5433` (`legal_ai`)
+* **Redis Task Broker:** `localhost:6379`
+
+---
+
+### Option B: Windows One-Click Demo
 Double-click [`start_demo.bat`](start_demo.bat) — it automatically starts Docker, initializes the PostgreSQL container, warms Ollama models into memory, runs migrations, boots the backend and frontend, and launches your browser.
 
 ---
 
-### Option B: Manual Setup
+### Option C: Developer Local Setup
 
 #### 1. Prerequisites
 - **Python 3.12+**
