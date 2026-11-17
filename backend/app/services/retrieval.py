@@ -35,10 +35,13 @@ def retrieve(
     user_id: uuid.UUID,
     query: str,
     *,
+    org_id: uuid.UUID | None = None,
     document_ids: list[uuid.UUID] | None = None,
     top_k: int | None = None,
     channels: AbstractSet[str] | None = None,
 ) -> list[Retrieved]:
+    from sqlalchemy import or_
+
     k = top_k or settings.RETRIEVAL_TOP_K
     pool = max(k * 4, 16)
     active = ALL_CHANNELS if channels is None else ALL_CHANNELS & channels
@@ -46,8 +49,12 @@ def retrieve(
     base = (
         select(Chunk, Document.filename)
         .join(Document, Chunk.document_id == Document.id)
-        .where(Document.user_id == user_id)
     )
+    if org_id:
+        base = base.where(or_(Document.org_id == org_id, Document.user_id == user_id))
+    else:
+        base = base.where(Document.user_id == user_id)
+
     if document_ids:
         base = base.where(Chunk.document_id.in_(document_ids))
 

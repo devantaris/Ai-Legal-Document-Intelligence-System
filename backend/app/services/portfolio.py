@@ -18,14 +18,19 @@ from app.services.llm import ChatMessage, get_provider
 from app.services.playbook import review_document_playbook
 
 
-def get_portfolio_matrix(session: Session, user_id: uuid.UUID) -> PortfolioMatrixOut:
+def get_portfolio_matrix(
+    session: Session, user_id: uuid.UUID, org_id: uuid.UUID | None = None
+) -> PortfolioMatrixOut:
     """Aggregates all documents into an executive due-diligence spreadsheet dataset."""
-    docs = (
-        session.query(Document)
-        .filter(Document.user_id == user_id)
-        .order_by(Document.created_at.desc())
-        .all()
-    )
+    from sqlalchemy import or_
+
+    query = session.query(Document)
+    if org_id:
+        query = query.filter(or_(Document.org_id == org_id, Document.user_id == user_id))
+    else:
+        query = query.filter(Document.user_id == user_id)
+
+    docs = query.order_by(Document.created_at.desc()).all()
 
     items: list[PortfolioItem] = []
 
@@ -79,6 +84,7 @@ def query_portfolio(
     user_id: uuid.UUID,
     question: str,
     document_ids: list[uuid.UUID] | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> PortfolioAnswerOut:
     """Multi-document cross-contract RAG query that compares or aggregates across contracts."""
     provider = get_provider()
@@ -87,6 +93,7 @@ def query_portfolio(
         session,
         user_id,
         question,
+        org_id=org_id,
         document_ids=document_ids,
         top_k=12,
     )
